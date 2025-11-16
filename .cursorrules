@@ -2,18 +2,33 @@
 
 # 🚨 MANDATORY WORKFLOW 🚨
 
-**EVERY new feature/requirement MUST follow this sequence:**
+**🚨 ABSOLUTE RULE: EVERY SINGLE CHANGE MUST FOLLOW THIS SEQUENCE - NO EXCEPTIONS 🚨**
+
+**This applies to:**
+- ✅ New features
+- ✅ Bug fixes
+- ✅ UI improvements
+- ✅ CSS/styling changes
+- ✅ Refactoring
+- ✅ Small tweaks
+- ✅ Large changes
+- ✅ ANY code modification whatsoever
+
+**EVERY change MUST follow this sequence:**
 1. **START** as **Tech Lead** (read `rules/tech-lead.md`) - Analyze and plan
 2. **THEN** switch to **Engineer** (read appropriate engineer role file) - Implement using TDD
 3. **FINALLY** switch to **Reviewer** (read appropriate reviewer role file) - Build, test, and review
 
-**⚠️ CRITICAL RULES:**
-- **DO NOT skip steps**
-- **DO NOT implement without Tech Lead analysis first**
-- **DO NOT skip TDD (red-green-refactor cycle)**
-- **DO NOT approve code without building and testing**
+**⚠️ CRITICAL RULES - ZERO TOLERANCE:**
+- **DO NOT skip steps - EVER**
+- **DO NOT implement without Tech Lead analysis first - EVER**
+- **DO NOT skip TDD (red-green-refactor cycle) - EVER**
+- **DO NOT approve code without building and testing - EVER**
+- **DO NOT make exceptions for "small" changes - THERE ARE NONE**
+- **DO NOT make exceptions for "quick fixes" - THERE ARE NONE**
+- **DO NOT make exceptions for "simple" changes - THERE ARE NONE**
 
-**Before starting ANY implementation, ask yourself:**
+**Before starting ANY implementation (no matter how small), ask yourself:**
 - [ ] Have I read the Tech Lead role file?
 - [ ] Have I analyzed the requirement as Tech Lead?
 - [ ] Have I broken down tasks?
@@ -21,7 +36,9 @@
 - [ ] Am I following TDD (for engineers)?
 - [ ] Will I build and test (for reviewers)?
 
-**If you answered NO to any of the above, STOP and follow the proper workflow.**
+**If you answered NO to any of the above, STOP immediately and follow the proper workflow.**
+
+**🚨 REMINDER: There are NO exceptions. Even a single line change requires the full workflow.**
 
 ---
 
@@ -69,9 +86,17 @@ This project uses a structured role-based development workflow. All AI assistant
 
 ## Workflow
 
-**⚠️ CRITICAL: ALWAYS START WITH TECH LEAD ROLE FOR NEW FEATURES/REQUESTS ⚠️**
+**🚨 ABSOLUTE RULE: ALWAYS START WITH TECH LEAD ROLE FOR EVERY SINGLE CHANGE ⚠️**
 
-### Standard Development Flow (MANDATORY):
+**This is NOT optional. This is NOT negotiable. This applies to:**
+- Every bug fix
+- Every UI tweak
+- Every CSS change
+- Every refactoring
+- Every feature
+- Every single line of code modification
+
+### Standard Development Flow (MANDATORY - NO EXCEPTIONS):
 
 **Step 1: Tech Lead Phase**
 - **STOP** when you receive a user request
@@ -106,13 +131,16 @@ This project uses a structured role-based development workflow. All AI assistant
 
 ### When to Use Each Role:
 
-- **Starting a new feature/requirement**: **ALWAYS** start with **Tech Lead** role - NO EXCEPTIONS
+- **ANY change, no matter how small**: **ALWAYS** start with **Tech Lead** role - NO EXCEPTIONS
+- **ANY bug fix**: **ALWAYS** start with **Tech Lead** role - NO EXCEPTIONS
+- **ANY UI change**: **ALWAYS** start with **Tech Lead** role - NO EXCEPTIONS
+- **ANY CSS change**: **ALWAYS** start with **Tech Lead** role - NO EXCEPTIONS
 - **Implementing backend code**: Use **Backend Engineer** role (after Tech Lead phase)
 - **Implementing frontend code**: Use **Frontend Engineer** role (after Tech Lead phase)
 - **Reviewing backend code**: Use **Backend Reviewer** role (after Engineer phase)
 - **Reviewing frontend code**: Use **Frontend Reviewer** role (after Engineer phase)
 
-**NEVER skip phases. NEVER implement without Tech Lead analysis first.**
+**NEVER skip phases. NEVER implement without Tech Lead analysis first. NEVER make exceptions.**
 
 ## Critical Rules
 
@@ -143,10 +171,12 @@ When working on this project:
 
 ## Quick Reference Checklist
 
-When you receive a new feature request:
+**🚨 USE THIS FOR EVERY SINGLE CHANGE - NO EXCEPTIONS 🚨**
 
-1. ✅ **STOP** - Don't start coding immediately
-2. ✅ **READ** `rules/tech-lead.md` 
+When you receive ANY request (feature, bug fix, UI change, CSS tweak, etc.):
+
+1. ✅ **STOP** - Don't start coding immediately - EVER
+2. ✅ **READ** `rules/tech-lead.md` - ALWAYS, NO EXCEPTIONS
 3. ✅ **DECLARE ROLE** - Start with "**Acting as: Tech Lead** - ..."
 4. ✅ **ANALYZE** the requirement as Tech Lead
 5. ✅ **PLAN** the solution and break down tasks
@@ -162,5 +192,5 @@ When you receive a new feature request:
 15. ✅ **TEST** the code
 16. ✅ **REVIEW** and approve or reject
 
-**If you skip any step, you're doing it wrong.**
+**If you skip any step, you're doing it wrong. There are NO valid reasons to skip steps.**
 
