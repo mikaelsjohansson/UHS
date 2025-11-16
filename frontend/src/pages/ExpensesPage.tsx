@@ -3,13 +3,18 @@ import { Expense } from '../types/expense';
 import { expenseService } from '../services/expenseService';
 import ExpenseList from '../components/ExpenseList';
 import ExpenseForm from '../components/ExpenseForm';
+import Modal from '../components/Modal';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import './ExpensesPage.css';
 
 function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [deleteExpense, setDeleteExpense] = useState<Expense | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     loadExpenses();
@@ -34,6 +39,7 @@ function ExpensesPage() {
       const newExpense = await expenseService.createExpense(expenseData);
       setExpenses([...expenses, newExpense]);
       setError(null);
+      setIsAddModalOpen(false);
     } catch (err) {
       setError('Failed to create expense. Please try again.');
       console.error('Error creating expense:', err);
@@ -59,6 +65,8 @@ function ExpensesPage() {
       await expenseService.deleteExpense(id);
       setExpenses(expenses.filter(exp => exp.id !== id));
       setError(null);
+      setIsDeleteModalOpen(false);
+      setDeleteExpense(null);
     } catch (err) {
       setError('Failed to delete expense. Please try again.');
       console.error('Error deleting expense:', err);
@@ -73,6 +81,30 @@ function ExpensesPage() {
     setEditingExpense(null);
   };
 
+  const handleAddClick = () => {
+    setIsAddModalOpen(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false);
+  };
+
+  const handleDeleteClick = (expense: Expense) => {
+    setDeleteExpense(expense);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setDeleteExpense(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteExpense?.id) {
+      handleDeleteExpense(deleteExpense.id);
+    }
+  };
+
   return (
     <div className="expenses-page">
       <div className="page-content">
@@ -82,32 +114,61 @@ function ExpensesPage() {
           </div>
         )}
 
-        <div className="content-container">
-          <section className="form-section">
-            <h2>{editingExpense ? 'Edit Expense' : 'Add New Expense'}</h2>
-            <ExpenseForm
-              expense={editingExpense}
-              onSubmit={editingExpense 
-                ? (data) => handleUpdateExpense(editingExpense.id!, data)
-                : handleCreateExpense
-              }
-              onCancel={editingExpense ? handleCancelEdit : undefined}
-            />
-          </section>
-
-          <section className="list-section">
+        <section className="list-section">
+          <div className="list-header">
             <h2>Expenses</h2>
-            {loading ? (
-              <div className="loading">Loading expenses...</div>
-            ) : (
-              <ExpenseList
-                expenses={expenses}
-                onEdit={handleEditClick}
-                onDelete={handleDeleteExpense}
-              />
-            )}
-          </section>
-        </div>
+            <button
+              className="btn-add-expense"
+              onClick={handleAddClick}
+              aria-label="Add new expense"
+            >
+              Add Expense
+            </button>
+          </div>
+          {loading ? (
+            <div className="loading">Loading expenses...</div>
+          ) : (
+            <ExpenseList
+              expenses={expenses}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+            />
+          )}
+        </section>
+
+        <Modal
+          isOpen={isAddModalOpen}
+          onClose={handleCloseAddModal}
+          title="Add New Expense"
+        >
+          <ExpenseForm
+            expense={null}
+            onSubmit={handleCreateExpense}
+            onCancel={handleCloseAddModal}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={editingExpense !== null}
+          onClose={handleCancelEdit}
+          title="Edit Expense"
+        >
+          <ExpenseForm
+            expense={editingExpense}
+            onSubmit={editingExpense 
+              ? (data) => handleUpdateExpense(editingExpense.id!, data)
+              : handleCreateExpense
+            }
+            onCancel={handleCancelEdit}
+          />
+        </Modal>
+
+        <DeleteConfirmationModal
+          isOpen={isDeleteModalOpen}
+          expense={deleteExpense}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
       </div>
     </div>
   );

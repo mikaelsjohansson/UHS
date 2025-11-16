@@ -4,7 +4,7 @@ import './ExpenseList.css';
 interface ExpenseListProps {
   expenses: Expense[];
   onEdit: (expense: Expense) => void;
-  onDelete: (id: number) => void;
+  onDelete: (expense: Expense) => void;
 }
 
 const ExpenseList = ({ expenses, onEdit, onDelete }: ExpenseListProps) => {
@@ -57,11 +57,7 @@ const ExpenseList = ({ expenses, onEdit, onDelete }: ExpenseListProps) => {
               Edit
             </button>
             <button
-              onClick={() => {
-                if (window.confirm(`Are you sure you want to delete "${expense.description}"?`)) {
-                  onDelete(expense.id!);
-                }
-              }}
+              onClick={() => onDelete(expense)}
               className="btn-delete"
               aria-label={`Delete expense: ${expense.description}`}
             >
