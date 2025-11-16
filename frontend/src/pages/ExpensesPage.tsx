@@ -75,10 +75,6 @@ function ExpensesPage() {
 
   return (
     <div className="expenses-page">
-      <header className="page-header">
-        <h1>Expenses</h1>
-      </header>
-      
       <div className="page-content">
         {error && (
           <div className="error-message" role="alert">
