@@ -28,6 +28,9 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const amountRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -72,6 +75,37 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     }
   }, [expense, categories]);
 
+  // Auto-focus description field when creating new expense
+  useEffect(() => {
+    if (!expense && !loadingCategories && inputRef.current) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  }, [expense, loadingCategories]);
+
+  // Auto-open date picker when date field receives focus
+  useEffect(() => {
+    const dateInput = dateRef.current;
+    if (!dateInput) return;
+
+    const handleFocus = () => {
+      // Open date picker if supported
+      if (typeof dateInput.showPicker === 'function') {
+        // Small delay to ensure focus is set first
+        setTimeout(() => {
+          dateInput.showPicker();
+        }, 0);
+      }
+    };
+
+    dateInput.addEventListener('focus', handleFocus);
+    return () => {
+      dateInput.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -80,6 +114,13 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     if (name === 'category') {
       const category = categories.find(cat => cat.name === value);
       setSelectedCategory(category || null);
+    }
+    
+    // Move focus to category after date is selected
+    if (name === 'expenseDate' && value) {
+      setTimeout(() => {
+        categoryRef.current?.focus();
+      }, 0);
     }
     
     // Handle description changes for autocomplete
@@ -139,38 +180,72 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     } catch (err) {
       console.error('Error loading category hint:', err);
     }
+    
+    // Move focus to amount field after selecting suggestion
+    setTimeout(() => {
+      amountRef.current?.focus();
+    }, 0);
   };
 
-  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions || suggestions.length === 0) {
+  const handleDescriptionKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // If suggestions are visible, handle autocomplete navigation
+    if (showSuggestions && suggestions.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedSuggestionIndex(prev => 
+            prev < suggestions.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedSuggestionIndex(prev => (prev > 0 ? prev - 1 : -1));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
+            await handleSuggestionClick(suggestions[selectedSuggestionIndex]);
+          } else if (suggestions.length > 0) {
+            // If no selection, use first suggestion
+            await handleSuggestionClick(suggestions[0]);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setShowSuggestions(false);
+          setSelectedSuggestionIndex(-1);
+          break;
+      }
       return;
     }
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedSuggestionIndex(prev => 
-          prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedSuggestionIndex(prev => (prev > 0 ? prev - 1 : -1));
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
-          await handleSuggestionClick(suggestions[selectedSuggestionIndex]);
-        } else if (suggestions.length > 0) {
-          // If no selection, use first suggestion
-          await handleSuggestionClick(suggestions[0]);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setShowSuggestions(false);
-        setSelectedSuggestionIndex(-1);
-        break;
+    // If no suggestions are visible, handle Enter to move to next field
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      amountRef.current?.focus();
+    }
+  };
+
+  const handleAmountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      dateRef.current?.focus();
+    }
+  };
+
+  const handleDateKeyDown = () => {
+    // Enter key is handled by auto-opening picker on focus
+    // No additional handling needed
+  };
+
+  const handleCategoryKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Submit form if Enter is pressed in category field
+      const submitButton = e.currentTarget.form?.querySelector('button[type="submit"]') as HTMLButtonElement;
+      if (submitButton && !submitButton.disabled) {
+        submitButton.click();
+      }
     }
   };
 
@@ -236,7 +311,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
             name="description"
             value={formData.description}
             onChange={handleChange}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleDescriptionKeyDown}
             onFocus={() => {
               if (suggestions.length > 0) {
                 setShowSuggestions(true);
@@ -270,11 +345,13 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
       <div className="form-group">
         <label htmlFor="amount">Amount *</label>
         <input
+          ref={amountRef}
           type="number"
           id="amount"
           name="amount"
           value={formData.amount}
           onChange={handleChange}
+          onKeyDown={handleAmountKeyDown}
           required
           min="0.01"
           step="0.01"
@@ -285,11 +362,13 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
       <div className="form-group">
         <label htmlFor="expenseDate">Date *</label>
         <input
+          ref={dateRef}
           type="date"
           id="expenseDate"
           name="expenseDate"
           value={formData.expenseDate}
           onChange={handleChange}
+          onKeyDown={handleDateKeyDown}
           required
         />
       </div>
@@ -297,10 +376,12 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
       <div className="form-group">
         <label htmlFor="category">Category</label>
         <select
+          ref={categoryRef}
           id="category"
           name="category"
           value={formData.category}
           onChange={handleChange}
+          onKeyDown={handleCategoryKeyDown}
           disabled={loadingCategories}
         >
           <option value="">Select a category</option>

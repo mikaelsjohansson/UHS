@@ -48,6 +48,44 @@ describe('ExpenseForm', () => {
     expect(screen.getByRole('button', { name: /add expense/i })).toBeInTheDocument();
   });
 
+  it('auto-focuses description field when creating new expense', async () => {
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+    });
+
+    const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
+    
+    // Verify description field has focus
+    await waitFor(() => {
+      expect(document.activeElement).toBe(descriptionInput);
+    });
+  });
+
+  it('does not auto-focus description when editing expense', async () => {
+    const expense: Expense = {
+      id: 1,
+      description: 'Test Expense',
+      amount: 100.50,
+      expenseDate: '2024-01-15T10:00:00',
+      category: 'Food',
+    };
+
+    render(<ExpenseForm expense={expense} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+    });
+
+    const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
+    
+    // Verify description field does NOT have focus when editing
+    expect(document.activeElement).not.toBe(descriptionInput);
+  });
+
   it('pre-fills form when editing an expense', async () => {
     const expense: Expense = {
       id: 1,
@@ -325,6 +363,198 @@ describe('ExpenseForm', () => {
     // Verify suggestions are hidden
     await waitFor(() => {
       expect(screen.queryByText('Skånetrafiken')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Enter key navigation', () => {
+    it('moves from description to amount when Enter is pressed and no suggestions are visible', async () => {
+      const user = userEvent.setup();
+      
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
+      const amountInput = screen.getByLabelText(/amount/i) as HTMLInputElement;
+
+      // Type in description without triggering suggestions
+      await user.type(descriptionInput, 'Test expense');
+      
+      // Ensure no suggestions are visible
+      await waitFor(() => {
+        expect(screen.queryByText(/skåne/i)).not.toBeInTheDocument();
+      });
+
+      // Press Enter
+      await user.keyboard('{Enter}');
+
+      // Verify focus moved to amount field
+      await waitFor(() => {
+        expect(document.activeElement).toBe(amountInput);
+      });
+    });
+
+    it('moves from amount to date when Enter is pressed', async () => {
+      const user = userEvent.setup();
+      
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      const amountInput = screen.getByLabelText(/amount/i) as HTMLInputElement;
+      const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
+
+      // Focus and type in amount
+      await user.type(amountInput, '100.50');
+
+      // Press Enter
+      await user.keyboard('{Enter}');
+
+      // Verify focus moved to date field
+      await waitFor(() => {
+        expect(document.activeElement).toBe(dateInput);
+      });
+    });
+
+    it('opens date picker automatically when date field receives focus', async () => {
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+      });
+
+      const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
+      
+      // Mock showPicker method (it may not exist in test environment)
+      const showPickerMock = vi.fn();
+      Object.defineProperty(dateInput, 'showPicker', {
+        value: showPickerMock,
+        writable: true,
+        configurable: true,
+      });
+
+      // Move focus to date input (simulating Enter from amount field)
+      dateInput.focus();
+
+      // Wait a bit for the focus effect to trigger
+      await waitFor(() => {
+        expect(showPickerMock).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('moves focus to category after date is selected', async () => {
+      const user = userEvent.setup();
+      
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+      });
+
+      const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
+      const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
+
+      // Focus on date input
+      await user.click(dateInput);
+
+      // Change the date value (simulating user selecting a date)
+      await user.clear(dateInput);
+      await user.type(dateInput, '2024-12-25');
+
+      // Verify focus moved to category field after date change
+      await waitFor(() => {
+        expect(document.activeElement).toBe(categorySelect);
+      });
+    });
+
+    it('submits form when Enter is pressed in category field', async () => {
+      const user = userEvent.setup();
+      mockOnSubmit.mockResolvedValue(undefined);
+      
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+      });
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/description/i), 'Test expense');
+      await user.type(screen.getByLabelText(/amount/i), '100.50');
+      
+      const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
+      
+      // Focus on category and select one
+      await user.selectOptions(categorySelect, 'Food');
+
+      // Press Enter
+      await user.keyboard('{Enter}');
+
+      // Verify form was submitted
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalled();
+      });
+    });
+
+    it('selects autocomplete suggestion when Enter is pressed in description with visible suggestions', async () => {
+      const user = userEvent.setup();
+      const mockSuggestions = ['Skånetrafiken'];
+      const mockCategoryHint = 'Transport';
+      
+      vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+      vi.mocked(expenseService.getCategoryHint).mockResolvedValue(mockCategoryHint);
+
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
+      await user.type(descriptionInput, 'skåne');
+
+      // Wait for suggestions to appear
+      await waitFor(() => {
+        expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+      });
+
+      // Press Enter - should select suggestion, not move to next field
+      await user.keyboard('{Enter}');
+
+      // Verify suggestion was selected (description filled)
+      await waitFor(() => {
+        expect(descriptionInput).toHaveValue('Skånetrafiken');
+      });
+
+      // Verify focus moved to amount after suggestion selection
+      const amountInput = screen.getByLabelText(/amount/i) as HTMLInputElement;
+      await waitFor(() => {
+        expect(document.activeElement).toBe(amountInput);
+      });
+    });
+
+    it('moves to amount after selecting autocomplete suggestion', async () => {
+      const user = userEvent.setup();
+      const mockSuggestions = ['Skånetrafiken'];
+      const mockCategoryHint = 'Transport';
+      
+      vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+      vi.mocked(expenseService.getCategoryHint).mockResolvedValue(mockCategoryHint);
+
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
+      const amountInput = screen.getByLabelText(/amount/i) as HTMLInputElement;
+
+      // Type to show suggestions
+      await user.type(descriptionInput, 'skåne');
+
+      // Wait for suggestions to appear
+      await waitFor(() => {
+        expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+      });
+
+      // Click on suggestion
+      await user.click(screen.getByText('Skånetrafiken'));
+
+      // Verify focus moved to amount field after selection
+      await waitFor(() => {
+        expect(document.activeElement).toBe(amountInput);
+      });
     });
   });
 });
