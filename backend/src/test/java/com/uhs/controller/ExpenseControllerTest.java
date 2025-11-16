@@ -109,6 +109,76 @@ class ExpenseControllerTest {
     }
 
     @Test
+    void createExpense_WithoutCategory_ShouldReturnBadRequest() throws Exception {
+        // Given
+        ExpenseDto inputDto = new ExpenseDto(null, "New Expense", new BigDecimal("75.00"), LocalDateTime.now(), null);
+
+        // When & Then
+        mockMvc.perform(post("/api/expenses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isBadRequest());
+
+        verify(expenseService, never()).createExpense(any(ExpenseDto.class));
+    }
+
+    @Test
+    void createExpense_WithEmptyCategory_ShouldReturnBadRequest() throws Exception {
+        // Given
+        ExpenseDto inputDto = new ExpenseDto(null, "New Expense", new BigDecimal("75.00"), LocalDateTime.now(), "");
+
+        // When & Then
+        mockMvc.perform(post("/api/expenses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isBadRequest());
+
+        verify(expenseService, never()).createExpense(any(ExpenseDto.class));
+    }
+
+    @Test
+    void createExpense_WithBlankCategory_ShouldReturnBadRequest() throws Exception {
+        // Given
+        ExpenseDto inputDto = new ExpenseDto(null, "New Expense", new BigDecimal("75.00"), LocalDateTime.now(), "   ");
+
+        // When & Then
+        mockMvc.perform(post("/api/expenses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isBadRequest());
+
+        verify(expenseService, never()).createExpense(any(ExpenseDto.class));
+    }
+
+    @Test
+    void updateExpense_WithoutCategory_ShouldReturnBadRequest() throws Exception {
+        // Given
+        ExpenseDto updateDto = new ExpenseDto(1L, "Updated Expense", new BigDecimal("150.00"), LocalDateTime.now(), null);
+
+        // When & Then
+        mockMvc.perform(put("/api/expenses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isBadRequest());
+
+        verify(expenseService, never()).updateExpense(anyLong(), any(ExpenseDto.class));
+    }
+
+    @Test
+    void updateExpense_WithEmptyCategory_ShouldReturnBadRequest() throws Exception {
+        // Given
+        ExpenseDto updateDto = new ExpenseDto(1L, "Updated Expense", new BigDecimal("150.00"), LocalDateTime.now(), "");
+
+        // When & Then
+        mockMvc.perform(put("/api/expenses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isBadRequest());
+
+        verify(expenseService, never()).updateExpense(anyLong(), any(ExpenseDto.class));
+    }
+
+    @Test
     void deleteExpense_ShouldReturnNoContent() throws Exception {
         // Given
         doNothing().when(expenseService).deleteExpense(1L);

@@ -35,7 +35,8 @@ public class Expense {
     @Column(name = "expense_date", nullable = false)
     private LocalDateTime expenseDate;
 
-    @Column(name = "category")
+    @NotBlank(message = "Category is required")
+    @Column(name = "category", nullable = false)
     private String category;
 
     @Column(name = "created_at", nullable = false, updatable = false)

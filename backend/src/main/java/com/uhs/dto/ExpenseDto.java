@@ -26,6 +26,7 @@ public class ExpenseDto {
 
     private LocalDateTime expenseDate;
 
+    @NotBlank(message = "Category is required")
     private String category;
 }
 

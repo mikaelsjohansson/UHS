@@ -19,5 +19,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<String> findDistinctDescriptionsContainingIgnoreCase(@Param("query") String query);
     
     List<Expense> findByDescriptionIgnoreCase(String description);
+    
+    @Query("SELECT e FROM Expense e WHERE e.category IS NULL OR e.category = ''")
+    List<Expense> findExpensesWithoutCategory();
 }
 

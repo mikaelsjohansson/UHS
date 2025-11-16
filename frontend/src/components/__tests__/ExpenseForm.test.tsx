@@ -165,6 +165,7 @@ describe('ExpenseForm', () => {
       description: 'Test Expense',
       amount: 100,
       expenseDate: '2024-01-15T10:00:00',
+      category: 'Food',
     };
 
     render(<ExpenseForm expense={expense} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);

@@ -61,13 +61,11 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
         description: expense.description,
         amount: expense.amount.toString(),
         expenseDate: expense.expenseDate.split('T')[0],
-        category: expense.category || '',
+        category: expense.category,
       });
       // Set selected category when editing
-      if (expense.category) {
-        const category = categories.find(cat => cat.name === expense.category);
-        setSelectedCategory(category || null);
-      }
+      const category = categories.find(cat => cat.name === expense.category);
+      setSelectedCategory(category || null);
     }
     // Note: We don't reset form when expense is null to preserve user input
     // Form is only reset when expense prop actually changes from a value to null
@@ -313,7 +311,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.description.trim() || !formData.amount) {
+    if (!formData.description.trim() || !formData.amount || !formData.category.trim()) {
       return;
     }
 
@@ -323,7 +321,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
         description: formData.description.trim(),
         amount: parseFloat(formData.amount),
         expenseDate: new Date(formData.expenseDate).toISOString(),
-        category: formData.category || undefined,
+        category: formData.category.trim(),
       });
       
       if (!expense) {
@@ -417,7 +415,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
       </div>
 
       <div className="form-group">
-        <label htmlFor="category">Category</label>
+        <label htmlFor="category">Category *</label>
         <div className="category-input-wrapper">
           <select
             ref={categoryRef}
@@ -427,6 +425,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
             onChange={handleChange}
             onKeyDown={handleCategoryKeyDown}
             disabled={loadingCategories}
+            required
           >
             <option value="">Select a category</option>
             {categories.map(category => (
