@@ -8,11 +8,6 @@ function Layout() {
         <Link to="/" className="app-title">
           <h1>UHS - Personal Expense Tracker</h1>
         </Link>
-        <nav className="header-nav">
-          <Link to="/" className="nav-link">
-            Home
-          </Link>
-        </nav>
       </header>
       <main className="layout-main">
         <Outlet />
