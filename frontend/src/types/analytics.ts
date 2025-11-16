@@ -9,3 +9,9 @@ export interface CategoryTrend {
   amount: number;
 }
 
+export interface MultiCategoryTrend {
+  category: string;
+  date: string;
+  amount: number;
+}
+

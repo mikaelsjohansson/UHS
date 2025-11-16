@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Expense } from '../../types/expense';
+import { MultiCategoryTrend } from '../../types/analytics';
 
 // Create mocks using vi.hoisted to ensure they're available before module import
 const { mockGet, mockPost, mockPut, mockDelete, mockApiInstance } = vi.hoisted(() => {
@@ -136,6 +137,55 @@ describe('expenseService', () => {
       expect(result).toEqual(mockExpenses);
       expect(mockGet).toHaveBeenCalledWith('/month', {
         params: { year: 2024, month: 1 },
+      });
+    });
+  });
+
+  describe('getMultiCategoryTrend', () => {
+    it('should fetch multi-category trend data with specific categories', async () => {
+      const mockTrends: MultiCategoryTrend[] = [
+        { category: 'Food', date: '2024-01-05', amount: 80 },
+        { category: 'Transport', date: '2024-01-10', amount: 100 },
+      ];
+
+      mockGet.mockResolvedValue({ data: mockTrends });
+
+      const result = await expenseService.getMultiCategoryTrend(
+        ['Food', 'Transport'],
+        '2024-01-01T00:00:00',
+        '2024-01-31T23:59:59'
+      );
+
+      expect(result).toEqual(mockTrends);
+      expect(mockGet).toHaveBeenCalledWith('/analytics/categories/trend', {
+        params: {
+          categories: ['Food', 'Transport'],
+          startDate: '2024-01-01T00:00:00',
+          endDate: '2024-01-31T23:59:59',
+        },
+      });
+    });
+
+    it('should fetch multi-category trend data for all categories when categories is null', async () => {
+      const mockTrends: MultiCategoryTrend[] = [
+        { category: 'Food', date: '2024-01-05', amount: 50 },
+        { category: 'Transport', date: '2024-01-10', amount: 100 },
+      ];
+
+      mockGet.mockResolvedValue({ data: mockTrends });
+
+      const result = await expenseService.getMultiCategoryTrend(
+        null,
+        '2024-01-01T00:00:00',
+        '2024-01-31T23:59:59'
+      );
+
+      expect(result).toEqual(mockTrends);
+      expect(mockGet).toHaveBeenCalledWith('/analytics/categories/trend', {
+        params: {
+          startDate: '2024-01-01T00:00:00',
+          endDate: '2024-01-31T23:59:59',
+        },
       });
     });
   });

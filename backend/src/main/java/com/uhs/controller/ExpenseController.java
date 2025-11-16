@@ -3,6 +3,7 @@ package com.uhs.controller;
 import com.uhs.dto.CategoryExpenseSummaryDto;
 import com.uhs.dto.CategoryTrendDto;
 import com.uhs.dto.ExpenseDto;
+import com.uhs.dto.MultiCategoryTrendDto;
 import com.uhs.service.ExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,15 @@ public class ExpenseController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         List<CategoryTrendDto> trends = expenseService.getCategoryTrend(category, startDate, endDate);
+        return ResponseEntity.ok(trends);
+    }
+
+    @GetMapping("/analytics/categories/trend")
+    public ResponseEntity<List<MultiCategoryTrendDto>> getMultiCategoryTrend(
+            @RequestParam(required = false) List<String> categories,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+        List<MultiCategoryTrendDto> trends = expenseService.getMultiCategoryTrend(categories, startDate, endDate);
         return ResponseEntity.ok(trends);
     }
 

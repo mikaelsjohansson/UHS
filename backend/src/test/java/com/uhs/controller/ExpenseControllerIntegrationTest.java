@@ -376,5 +376,207 @@ class ExpenseControllerIntegrationTest {
                 .andExpect(jsonPath("$[?(@.description == 'Leap Year Feb 29')]").exists())
                 .andExpect(jsonPath("$[?(@.description == 'Leap Year Feb 28')]").exists());
     }
+
+    @Test
+    void getMultiCategoryTrend_WithMultipleCategories_ShouldReturnTrendDataForEachCategory() throws Exception {
+        // Given - Create expenses for different categories in different dates
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("Food Expense 1");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 5, 10, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("Food Expense 2");
+        expense2.setAmount(new BigDecimal("30.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 5, 15, 0));
+        expense2.setCategory("Food");
+        expenseService.createExpense(expense2);
+
+        ExpenseDto expense3 = new ExpenseDto();
+        expense3.setDescription("Transport Expense 1");
+        expense3.setAmount(new BigDecimal("100.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2024, 1, 10, 10, 0));
+        expense3.setCategory("Transport");
+        expenseService.createExpense(expense3);
+
+        ExpenseDto expense4 = new ExpenseDto();
+        expense4.setDescription("Food Expense 3");
+        expense4.setAmount(new BigDecimal("25.00"));
+        expense4.setExpenseDate(LocalDateTime.of(2024, 1, 15, 10, 0));
+        expense4.setCategory("Food");
+        expenseService.createExpense(expense4);
+
+        ExpenseDto expense5 = new ExpenseDto();
+        expense5.setDescription("Transport Expense 2");
+        expense5.setAmount(new BigDecimal("75.00"));
+        expense5.setExpenseDate(LocalDateTime.of(2024, 1, 20, 14, 0));
+        expense5.setCategory("Transport");
+        expenseService.createExpense(expense5);
+
+        // When & Then - Get multi-category trend for Food and Transport
+        mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .param("categories", "Food", "Transport")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(4)) // 2 dates for Food, 2 dates for Transport
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-05')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-05')].amount").value(80))
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-15')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-15')].amount").value(25))
+                .andExpect(jsonPath("$[?(@.category == 'Transport' && @.date == '2024-01-10')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Transport' && @.date == '2024-01-10')].amount").value(100))
+                .andExpect(jsonPath("$[?(@.category == 'Transport' && @.date == '2024-01-20')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Transport' && @.date == '2024-01-20')].amount").value(75));
+    }
+
+    @Test
+    void getMultiCategoryTrend_WithAllCategories_ShouldReturnTrendDataForAllCategories() throws Exception {
+        // Given - Create expenses for different categories
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("Food Expense");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 5, 10, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("Transport Expense");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 10, 10, 0));
+        expense2.setCategory("Transport");
+        expenseService.createExpense(expense2);
+
+        ExpenseDto expense3 = new ExpenseDto();
+        expense3.setDescription("Entertainment Expense");
+        expense3.setAmount(new BigDecimal("75.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2024, 1, 15, 10, 0));
+        expense3.setCategory("Entertainment");
+        expenseService.createExpense(expense3);
+
+        // When & Then - Get multi-category trend for all categories (no categories parameter)
+        mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(3)) // One entry per category/date combination
+                .andExpect(jsonPath("$[?(@.category == 'Food')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Transport')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Entertainment')]").exists());
+    }
+
+    @Test
+    void getMultiCategoryTrend_WithNoMatchingExpenses_ShouldReturnEmptyList() throws Exception {
+        // Given - Create expenses outside the date range
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("Food Expense");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2023, 12, 15, 10, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("Transport Expense");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 2, 10, 10, 0));
+        expense2.setCategory("Transport");
+        expenseService.createExpense(expense2);
+
+        // When & Then - Get multi-category trend for January 2024 (no matching expenses)
+        mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .param("categories", "Food", "Transport")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getMultiCategoryTrend_WithSingleCategory_ShouldReturnTrendDataForThatCategory() throws Exception {
+        // Given - Create expenses for one category
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("Food Expense 1");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 5, 10, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("Food Expense 2");
+        expense2.setAmount(new BigDecimal("30.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 5, 15, 0));
+        expense2.setCategory("Food");
+        expenseService.createExpense(expense2);
+
+        ExpenseDto expense3 = new ExpenseDto();
+        expense3.setDescription("Food Expense 3");
+        expense3.setAmount(new BigDecimal("25.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2024, 1, 15, 10, 0));
+        expense3.setCategory("Food");
+        expenseService.createExpense(expense3);
+
+        // When & Then - Get multi-category trend for Food only
+        mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .param("categories", "Food")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2)) // 2 dates
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-05')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-05')].amount").value(80))
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-15')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-15')].amount").value(25));
+    }
+
+    @Test
+    void getMultiCategoryTrend_WithDateBoundaries_ShouldIncludeAllDaysInRange() throws Exception {
+        // Given - Create expenses on first and last day of range
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("First Day Expense");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 1, 0, 0, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("Last Day Expense");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 31, 23, 59, 59));
+        expense2.setCategory("Transport");
+        expenseService.createExpense(expense2);
+
+        ExpenseDto expense3 = new ExpenseDto();
+        expense3.setDescription("Before Range");
+        expense3.setAmount(new BigDecimal("75.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2023, 12, 31, 23, 59, 59));
+        expense3.setCategory("Food");
+        expenseService.createExpense(expense3);
+
+        ExpenseDto expense4 = new ExpenseDto();
+        expense4.setDescription("After Range");
+        expense4.setAmount(new BigDecimal("200.00"));
+        expense4.setExpenseDate(LocalDateTime.of(2024, 2, 1, 0, 0, 0));
+        expense4.setCategory("Transport");
+        expenseService.createExpense(expense4);
+
+        // When & Then - Get multi-category trend for January 2024
+        mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .param("categories", "Food", "Transport")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2)) // Only expenses within range
+                .andExpect(jsonPath("$[?(@.category == 'Food' && @.date == '2024-01-01')]").exists())
+                .andExpect(jsonPath("$[?(@.category == 'Transport' && @.date == '2024-01-31')]").exists())
+                .andExpect(jsonPath("$[?(@.description == 'Before Range')]").doesNotExist())
+                .andExpect(jsonPath("$[?(@.description == 'After Range')]").doesNotExist());
+    }
 }
 

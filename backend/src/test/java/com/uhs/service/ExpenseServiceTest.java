@@ -453,5 +453,103 @@ class ExpenseServiceTest {
         assertThrows(IllegalArgumentException.class, () -> expenseService.getExpensesByMonth(2024, 0));
         verify(expenseRepository, never()).findByExpenseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class));
     }
+
+    @Test
+    void getMultiCategoryTrend_WithMultipleCategories_ShouldReturnTrendDataForEachCategory() {
+        // Given
+        List<String> categories = Arrays.asList("Food", "Transport");
+        LocalDateTime startDate = LocalDateTime.of(2024, 1, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2024, 1, 31, 23, 59, 59);
+        
+        Expense foodExpense1 = new Expense();
+        foodExpense1.setId(1L);
+        foodExpense1.setDescription("Food Expense 1");
+        foodExpense1.setAmount(new BigDecimal("50.00"));
+        foodExpense1.setExpenseDate(LocalDateTime.of(2024, 1, 5, 10, 0));
+        foodExpense1.setCategory("Food");
+        
+        Expense foodExpense2 = new Expense();
+        foodExpense2.setId(2L);
+        foodExpense2.setDescription("Food Expense 2");
+        foodExpense2.setAmount(new BigDecimal("30.00"));
+        foodExpense2.setExpenseDate(LocalDateTime.of(2024, 1, 5, 15, 0));
+        foodExpense2.setCategory("Food");
+        
+        Expense transportExpense1 = new Expense();
+        transportExpense1.setId(3L);
+        transportExpense1.setDescription("Transport Expense 1");
+        transportExpense1.setAmount(new BigDecimal("100.00"));
+        transportExpense1.setExpenseDate(LocalDateTime.of(2024, 1, 10, 10, 0));
+        transportExpense1.setCategory("Transport");
+        
+        List<Expense> expenses = Arrays.asList(foodExpense1, foodExpense2, transportExpense1);
+        when(expenseRepository.findByCategoryInAndExpenseDateBetween(categories, startDate, endDate))
+                .thenReturn(expenses);
+
+        // When
+        List<com.uhs.dto.MultiCategoryTrendDto> result = expenseService.getMultiCategoryTrend(categories, startDate, endDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size()); // 1 for Food (grouped by date), 1 for Transport
+        
+        // Verify Food category data
+        long foodCount = result.stream()
+                .filter(t -> "Food".equals(t.getCategory()))
+                .count();
+        assertEquals(1, foodCount); // Grouped by date
+        
+        com.uhs.dto.MultiCategoryTrendDto foodTrend = result.stream()
+                .filter(t -> "Food".equals(t.getCategory()) && LocalDate.of(2024, 1, 5).equals(t.getDate()))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(foodTrend);
+        assertEquals(new BigDecimal("80.00"), foodTrend.getAmount());
+        
+        // Verify Transport category data
+        com.uhs.dto.MultiCategoryTrendDto transportTrend = result.stream()
+                .filter(t -> "Transport".equals(t.getCategory()) && LocalDate.of(2024, 1, 10).equals(t.getDate()))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(transportTrend);
+        assertEquals(new BigDecimal("100.00"), transportTrend.getAmount());
+        
+        verify(expenseRepository, times(1)).findByCategoryInAndExpenseDateBetween(categories, startDate, endDate);
+    }
+
+    @Test
+    void getMultiCategoryTrend_WithAllCategories_ShouldReturnTrendDataForAllCategories() {
+        // Given
+        LocalDateTime startDate = LocalDateTime.of(2024, 1, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2024, 1, 31, 23, 59, 59);
+        
+        Expense foodExpense = new Expense();
+        foodExpense.setId(1L);
+        foodExpense.setDescription("Food Expense");
+        foodExpense.setAmount(new BigDecimal("50.00"));
+        foodExpense.setExpenseDate(LocalDateTime.of(2024, 1, 5, 10, 0));
+        foodExpense.setCategory("Food");
+        
+        Expense transportExpense = new Expense();
+        transportExpense.setId(2L);
+        transportExpense.setDescription("Transport Expense");
+        transportExpense.setAmount(new BigDecimal("100.00"));
+        transportExpense.setExpenseDate(LocalDateTime.of(2024, 1, 10, 10, 0));
+        transportExpense.setCategory("Transport");
+        
+        List<Expense> expenses = Arrays.asList(foodExpense, transportExpense);
+        when(expenseRepository.findByExpenseDateBetween(startDate, endDate))
+                .thenReturn(expenses);
+
+        // When
+        List<com.uhs.dto.MultiCategoryTrendDto> result = expenseService.getMultiCategoryTrend(null, startDate, endDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        
+        verify(expenseRepository, times(1)).findByExpenseDateBetween(startDate, endDate);
+        verify(expenseRepository, never()).findByCategoryInAndExpenseDateBetween(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
+    }
 }
 

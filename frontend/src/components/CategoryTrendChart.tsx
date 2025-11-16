@@ -1,26 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { CategoryTrend } from '../types/analytics';
+import { MultiCategoryTrend } from '../types/analytics';
 import { expenseService } from '../services/expenseService';
 import { formatCurrency } from '../utils/currency';
 import './CategoryTrendChart.css';
 
 interface CategoryTrendChartProps {
-  category: string;
+  categories: string[] | null;
   startYear: number;
   startMonth: number;
   endYear: number;
   endMonth: number;
 }
 
-function CategoryTrendChart({ category, startYear, startMonth, endYear, endMonth }: CategoryTrendChartProps) {
-  const [trendData, setTrendData] = useState<CategoryTrend[]>([]);
+// Color palette for different categories
+const COLORS = [
+  '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', 
+  '#ffc658', '#ff7300', '#8dd1e1', '#d084d0', '#ffb347', '#87ceeb'
+];
+
+function CategoryTrendChart({ categories, startYear, startMonth, endYear, endMonth }: CategoryTrendChartProps) {
+  const [trendData, setTrendData] = useState<MultiCategoryTrend[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadTrendData();
-  }, [category, startYear, startMonth, endYear, endMonth]);
+  }, [categories, startYear, startMonth, endYear, endMonth]);
 
   const loadTrendData = async () => {
     try {
@@ -45,7 +51,7 @@ function CategoryTrendChart({ category, startYear, startMonth, endYear, endMonth
       const startDateStr = formatDateTime(startDate);
       const endDateStr = formatDateTime(endDate);
       
-      const data = await expenseService.getCategoryTrend(category, startDateStr, endDateStr);
+      const data = await expenseService.getMultiCategoryTrend(categories, startDateStr, endDateStr);
       setTrendData(data);
     } catch (err) {
       setError('Failed to load trend data. Please try again.');
@@ -55,25 +61,64 @@ function CategoryTrendChart({ category, startYear, startMonth, endYear, endMonth
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    // For longer date ranges, show year as well
-    const daysDiff = Math.abs((new Date(endYear, endMonth, 0).getTime() - new Date(startYear, startMonth - 1, 1).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysDiff > 365) {
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } else if (daysDiff > 90) {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-  };
+  // Transform data to group by date with amounts per category
+  const chartData = useMemo(() => {
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      // For longer date ranges, show year as well
+      const daysDiff = Math.abs((new Date(endYear, endMonth, 0).getTime() - new Date(startYear, startMonth - 1, 1).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > 365) {
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      } else if (daysDiff > 90) {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    };
+
+    // Filter trendData to only include selected categories if specified
+    const filteredData = categories !== null && categories.length > 0
+      ? trendData.filter(item => categories.includes(item.category))
+      : trendData;
+
+    const dateMap = new Map<string, Record<string, string | number>>();
+    
+    filteredData.forEach(item => {
+      const dateKey = item.date;
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, { date: dateKey, formattedDate: formatDate(item.date) });
+      }
+      dateMap.get(dateKey)![item.category] = item.amount;
+    });
+    
+    return Array.from(dateMap.values()).sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [trendData, categories, startYear, startMonth, endYear, endMonth]);
+
+  // Get unique categories from filtered data
+  const uniqueCategories = useMemo(() => {
+    // Filter trendData to only include selected categories if specified
+    const filteredData = categories !== null && categories.length > 0
+      ? trendData.filter(item => categories.includes(item.category))
+      : trendData;
+    
+    const cats = new Set<string>();
+    filteredData.forEach(item => cats.add(item.category));
+    return Array.from(cats).sort();
+  }, [trendData, categories]);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
+      const data = payload[0].payload;
       return (
         <div className="trend-tooltip">
-          <p className="tooltip-date">{formatDate(payload[0].payload.date)}</p>
-          <p className="tooltip-amount">{formatCurrency(payload[0].value)}</p>
+          <p className="tooltip-date">{data.formattedDate}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="tooltip-amount" style={{ color: entry.color }}>
+              {entry.name}: {formatCurrency(entry.value)}
+            </p>
+          ))}
         </div>
       );
     }
@@ -89,21 +134,21 @@ function CategoryTrendChart({ category, startYear, startMonth, endYear, endMonth
   }
 
   if (trendData.length === 0) {
-    return <div className="no-data">No spending data available for this category in the selected period.</div>;
+    const categoryText = categories === null ? 'categories' : categories.length === 1 ? categories[0] : 'selected categories';
+    return <div className="no-data">No spending data available for {categoryText} in the selected period.</div>;
   }
 
-  const chartData = trendData.map(item => ({
-    date: item.date,
-    amount: item.amount,
-    formattedDate: formatDate(item.date),
-  }));
-
   const totalAmount = trendData.reduce((sum, item) => sum + item.amount, 0);
+  const displayTitle = categories === null 
+    ? 'All Categories - Spending Trend'
+    : categories.length === 1
+    ? `${categories[0]} - Spending Trend`
+    : `${categories.length} Categories - Spending Trend`;
 
   return (
     <div className="trend-chart-container">
       <div className="trend-header">
-        <h4>{category} - Spending Trend</h4>
+        <h4>{displayTitle}</h4>
         <p className="trend-total">Total: {formatCurrency(totalAmount)}</p>
       </div>
       <ResponsiveContainer width="100%" height={400}>
@@ -122,15 +167,18 @@ function CategoryTrendChart({ category, startYear, startMonth, endYear, endMonth
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
-          <Line
-            type="monotone"
-            dataKey="amount"
-            stroke="#0088FE"
-            strokeWidth={2}
-            dot={{ fill: '#0088FE', r: 4 }}
-            activeDot={{ r: 6 }}
-            name="Amount"
-          />
+          {uniqueCategories.map((category, index) => (
+            <Line
+              key={category}
+              type="monotone"
+              dataKey={category}
+              stroke={COLORS[index % COLORS.length]}
+              strokeWidth={2}
+              dot={{ fill: COLORS[index % COLORS.length], r: 4 }}
+              activeDot={{ r: 6 }}
+              name={category}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>

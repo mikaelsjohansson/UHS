@@ -16,7 +16,7 @@ function AnalyticsPage() {
   const [categorySummaries, setCategorySummaries] = useState<CategoryExpenseSummary[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   // Date range for trend view
   const [startYear, setStartYear] = useState<number>(currentDate.getFullYear() - 1);
@@ -34,8 +34,9 @@ function AnalyticsPage() {
   }, [year, month, viewMode]);
 
   useEffect(() => {
-    if (viewMode === 'trend' && allCategories.length > 0 && !selectedCategory) {
-      setSelectedCategory(allCategories[0]);
+    if (viewMode === 'trend' && allCategories.length > 0 && selectedCategories.length === 0) {
+      // Select all categories by default
+      setSelectedCategories([...allCategories]);
     }
   }, [viewMode, allCategories]);
 
@@ -45,15 +46,6 @@ function AnalyticsPage() {
       setError(null);
       const data = await expenseService.getExpensesByYearMonth(year, month);
       setCategorySummaries(data);
-      // Update selected category if current selection doesn't exist in new data
-      if (data.length > 0) {
-        const categoryExists = data.some(item => item.category === selectedCategory);
-        if (!categoryExists || !selectedCategory) {
-          setSelectedCategory(data[0].category);
-        }
-      } else {
-        setSelectedCategory('');
-      }
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load analytics. Please try again.';
       setError(errorMessage);
@@ -76,9 +68,6 @@ function AnalyticsPage() {
         new Set(expenses.map(exp => exp.category || 'Uncategorized').filter(Boolean))
       );
       setAllCategories(uniqueCategories);
-      if (uniqueCategories.length > 0 && !selectedCategory) {
-        setSelectedCategory(uniqueCategories[0]);
-      }
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load categories. Please try again.';
       setError(errorMessage);
@@ -100,8 +89,12 @@ function AnalyticsPage() {
     setViewMode(mode);
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCategory(e.target.value);
+  const handleCategoryToggle = (category: string) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== category));
+    } else {
+      setSelectedCategories([...selectedCategories, category]);
+    }
   };
 
   const handleStartYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -229,19 +222,19 @@ function AnalyticsPage() {
                 <h3>Category Spending Over Time</h3>
                 <div className="trend-controls">
                   <div className="category-selector">
-                    <label htmlFor="category-select">Select Category:</label>
-                    <select
-                      id="category-select"
-                      value={selectedCategory}
-                      onChange={handleCategoryChange}
-                      className="select-input"
-                    >
+                    <label>Select Categories:</label>
+                    <div className="category-checkboxes">
                       {allCategories.map(cat => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
+                        <label key={cat} className="category-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(cat)}
+                            onChange={() => handleCategoryToggle(cat)}
+                          />
+                          <span>{cat}</span>
+                        </label>
                       ))}
-                    </select>
+                    </div>
                   </div>
                   <div className="date-range-selectors">
                     <div className="date-range-group">
@@ -292,9 +285,9 @@ function AnalyticsPage() {
                     </div>
                   </div>
                 </div>
-                {selectedCategory && (
+                {selectedCategories.length > 0 && (
                   <CategoryTrendChart
-                    category={selectedCategory}
+                    categories={selectedCategories}
                     startYear={startYear}
                     startMonth={startMonth}
                     endYear={endYear}

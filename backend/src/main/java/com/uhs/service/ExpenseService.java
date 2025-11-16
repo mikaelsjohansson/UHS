@@ -3,6 +3,7 @@ package com.uhs.service;
 import com.uhs.dto.CategoryExpenseSummaryDto;
 import com.uhs.dto.CategoryTrendDto;
 import com.uhs.dto.ExpenseDto;
+import com.uhs.dto.MultiCategoryTrendDto;
 import com.uhs.model.Expense;
 import com.uhs.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
@@ -209,6 +210,54 @@ public class ExpenseService {
         List<Expense> expenses = fetchExpensesByYearMonth(year, month);
         return expenses.stream()
                 .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public List<Expense> fetchMultiCategoryTrendExpenses(List<String> categories, LocalDateTime startDate, LocalDateTime endDate) {
+        if (categories == null || categories.isEmpty()) {
+            // Fetch all categories
+            return expenseRepository.findByExpenseDateBetween(startDate, endDate);
+        } else {
+            // Fetch specific categories
+            return expenseRepository.findByCategoryInAndExpenseDateBetween(categories, startDate, endDate);
+        }
+    }
+
+    public List<MultiCategoryTrendDto> getMultiCategoryTrend(List<String> categories, LocalDateTime startDate, LocalDateTime endDate) {
+        // Fetch in separate transaction, then process outside transaction to release connection
+        List<Expense> expenses = fetchMultiCategoryTrendExpenses(categories, startDate, endDate);
+        
+        // Group by category and date
+        Map<String, Map<LocalDate, List<Expense>>> groupedByCategoryAndDate = expenses.stream()
+                .collect(Collectors.groupingBy(
+                        expense -> expense.getCategory() != null ? expense.getCategory() : "Uncategorized",
+                        Collectors.groupingBy(
+                                expense -> expense.getExpenseDate().toLocalDate()
+                        )
+                ));
+        
+        // Flatten to list of MultiCategoryTrendDto
+        return groupedByCategoryAndDate.entrySet().stream()
+                .flatMap(categoryEntry -> {
+                    String category = categoryEntry.getKey();
+                    Map<LocalDate, List<Expense>> dateMap = categoryEntry.getValue();
+                    return dateMap.entrySet().stream()
+                            .map(dateEntry -> {
+                                LocalDate date = dateEntry.getKey();
+                                BigDecimal totalAmount = dateEntry.getValue().stream()
+                                        .map(Expense::getAmount)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                return new MultiCategoryTrendDto(category, date, totalAmount);
+                            });
+                })
+                .sorted((a, b) -> {
+                    int categoryCompare = a.getCategory().compareTo(b.getCategory());
+                    if (categoryCompare != 0) {
+                        return categoryCompare;
+                    }
+                    return a.getDate().compareTo(b.getDate());
+                })
                 .collect(Collectors.toList());
     }
 }

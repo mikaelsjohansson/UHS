@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { Expense } from '../types/expense';
-import { CategoryExpenseSummary, CategoryTrend } from '../types/analytics';
+import { CategoryExpenseSummary, CategoryTrend, MultiCategoryTrend } from '../types/analytics';
 
 const API_BASE_URL = '/api/expenses';
 
@@ -93,6 +93,24 @@ export const expenseService = {
   getExpensesByMonth: async (year: number, month: number): Promise<Expense[]> => {
     const response = await api.get<Expense[]>('/month', {
       params: { year, month },
+    });
+    return response.data;
+  },
+
+  getMultiCategoryTrend: async (
+    categories: string[] | null,
+    startDate: string,
+    endDate: string
+  ): Promise<MultiCategoryTrend[]> => {
+    const params: { startDate: string; endDate: string; categories?: string[] } = {
+      startDate,
+      endDate,
+    };
+    if (categories && categories.length > 0) {
+      params.categories = categories;
+    }
+    const response = await api.get<MultiCategoryTrend[]>('/analytics/categories/trend', {
+      params,
     });
     return response.data;
   },

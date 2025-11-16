@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uhs.dto.CategoryExpenseSummaryDto;
 import com.uhs.dto.CategoryTrendDto;
 import com.uhs.dto.ExpenseDto;
+import com.uhs.dto.MultiCategoryTrendDto;
 import com.uhs.service.ExpenseService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -305,6 +306,55 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$[1].amount").value(100.00));
 
         verify(expenseService, times(1)).getExpensesByMonth(2024, 1);
+    }
+
+    @Test
+    void getMultiCategoryTrend_WithMultipleCategories_ShouldReturnTrendData() throws Exception {
+        // Given
+        MultiCategoryTrendDto trend1 = new MultiCategoryTrendDto("Food", LocalDate.of(2024, 1, 5), new BigDecimal("80.00"));
+        MultiCategoryTrendDto trend2 = new MultiCategoryTrendDto("Transport", LocalDate.of(2024, 1, 10), new BigDecimal("100.00"));
+        List<MultiCategoryTrendDto> trends = Arrays.asList(trend1, trend2);
+
+        when(expenseService.getMultiCategoryTrend(anyList(), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(trends);
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .param("categories", "Food", "Transport")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].category").exists())
+                .andExpect(jsonPath("$[0].date").exists())
+                .andExpect(jsonPath("$[0].amount").exists());
+
+        verify(expenseService, times(1)).getMultiCategoryTrend(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    void getMultiCategoryTrend_WithAllCategories_ShouldReturnTrendData() throws Exception {
+        // Given
+        MultiCategoryTrendDto trend1 = new MultiCategoryTrendDto("Food", LocalDate.of(2024, 1, 5), new BigDecimal("50.00"));
+        MultiCategoryTrendDto trend2 = new MultiCategoryTrendDto("Transport", LocalDate.of(2024, 1, 10), new BigDecimal("100.00"));
+        List<MultiCategoryTrendDto> trends = Arrays.asList(trend1, trend2);
+
+        when(expenseService.getMultiCategoryTrend(isNull(), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(trends);
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].category").exists())
+                .andExpect(jsonPath("$[0].date").exists())
+                .andExpect(jsonPath("$[0].amount").exists());
+
+        verify(expenseService, times(1)).getMultiCategoryTrend(isNull(), any(LocalDateTime.class), any(LocalDateTime.class));
     }
 }
 
