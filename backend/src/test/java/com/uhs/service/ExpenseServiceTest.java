@@ -1,5 +1,7 @@
 package com.uhs.service;
 
+import com.uhs.dto.CategoryExpenseSummaryDto;
+import com.uhs.dto.CategoryTrendDto;
 import com.uhs.dto.ExpenseDto;
 import com.uhs.model.Expense;
 import com.uhs.repository.ExpenseRepository;
@@ -11,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -152,6 +155,119 @@ class ExpenseServiceTest {
         assertThrows(RuntimeException.class, () -> expenseService.deleteExpense(1L));
         verify(expenseRepository, times(1)).existsById(1L);
         verify(expenseRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void getExpensesByYearMonth_ShouldReturnGroupedByCategory() {
+        // Given
+        LocalDateTime startOfMonth = LocalDateTime.of(2024, 1, 1, 0, 0);
+        LocalDateTime endOfMonth = LocalDateTime.of(2024, 1, 31, 23, 59, 59);
+        
+        Expense expense1 = new Expense();
+        expense1.setId(1L);
+        expense1.setDescription("Food Expense 1");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 15, 10, 0));
+        expense1.setCategory("Food");
+        
+        Expense expense2 = new Expense();
+        expense2.setId(2L);
+        expense2.setDescription("Food Expense 2");
+        expense2.setAmount(new BigDecimal("30.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 20, 10, 0));
+        expense2.setCategory("Food");
+        
+        Expense expense3 = new Expense();
+        expense3.setId(3L);
+        expense3.setDescription("Transport Expense");
+        expense3.setAmount(new BigDecimal("100.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2024, 1, 10, 10, 0));
+        expense3.setCategory("Transport");
+        
+        List<Expense> expenses = Arrays.asList(expense1, expense2, expense3);
+        when(expenseRepository.findByExpenseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(expenses);
+
+        // When
+        List<CategoryExpenseSummaryDto> result = expenseService.getExpensesByYearMonth(2024, 1);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        
+        CategoryExpenseSummaryDto foodSummary = result.stream()
+                .filter(s -> "Food".equals(s.getCategory()))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(foodSummary);
+        assertEquals(new BigDecimal("80.00"), foodSummary.getTotalAmount());
+        assertEquals(2L, foodSummary.getCount());
+        
+        CategoryExpenseSummaryDto transportSummary = result.stream()
+                .filter(s -> "Transport".equals(s.getCategory()))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(transportSummary);
+        assertEquals(new BigDecimal("100.00"), transportSummary.getTotalAmount());
+        assertEquals(1L, transportSummary.getCount());
+        
+        verify(expenseRepository, times(1)).findByExpenseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    void getCategoryTrend_ShouldReturnTrendData() {
+        // Given
+        String category = "Food";
+        LocalDateTime startDate = LocalDateTime.of(2024, 1, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2024, 1, 31, 23, 59, 59);
+        
+        Expense expense1 = new Expense();
+        expense1.setId(1L);
+        expense1.setDescription("Food Expense 1");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 5, 10, 0));
+        expense1.setCategory("Food");
+        
+        Expense expense2 = new Expense();
+        expense2.setId(2L);
+        expense2.setDescription("Food Expense 2");
+        expense2.setAmount(new BigDecimal("30.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 5, 15, 0));
+        expense2.setCategory("Food");
+        
+        Expense expense3 = new Expense();
+        expense3.setId(3L);
+        expense3.setDescription("Food Expense 3");
+        expense3.setAmount(new BigDecimal("25.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2024, 1, 15, 10, 0));
+        expense3.setCategory("Food");
+        
+        List<Expense> expenses = Arrays.asList(expense1, expense2, expense3);
+        when(expenseRepository.findByCategoryAndExpenseDateBetween(category, startDate, endDate))
+                .thenReturn(expenses);
+
+        // When
+        List<CategoryTrendDto> result = expenseService.getCategoryTrend(category, startDate, endDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size()); // Grouped by date
+        
+        CategoryTrendDto day5Trend = result.stream()
+                .filter(t -> LocalDate.of(2024, 1, 5).equals(t.getDate()))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(day5Trend);
+        assertEquals(new BigDecimal("80.00"), day5Trend.getAmount());
+        
+        CategoryTrendDto day15Trend = result.stream()
+                .filter(t -> LocalDate.of(2024, 1, 15).equals(t.getDate()))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(day15Trend);
+        assertEquals(new BigDecimal("25.00"), day15Trend.getAmount());
+        
+        verify(expenseRepository, times(1)).findByCategoryAndExpenseDateBetween(category, startDate, endDate);
     }
 }
 

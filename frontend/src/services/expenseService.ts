@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { Expense } from '../types/expense';
+import { CategoryExpenseSummary, CategoryTrend } from '../types/analytics';
 
 const API_BASE_URL = '/api/expenses';
 
@@ -38,6 +39,27 @@ export const expenseService = {
 
   deleteExpense: async (id: number): Promise<void> => {
     await api.delete(`/${id}`);
+  },
+
+  getExpensesByYearMonth: async (year: number, month: number): Promise<CategoryExpenseSummary[]> => {
+    const response = await api.get<CategoryExpenseSummary[]>('/analytics', {
+      params: { year, month },
+    });
+    return response.data;
+  },
+
+  getCategoryTrend: async (
+    category: string,
+    startDate: string,
+    endDate: string
+  ): Promise<CategoryTrend[]> => {
+    const response = await api.get<CategoryTrend[]>(`/analytics/category/${encodeURIComponent(category)}`, {
+      params: {
+        startDate,
+        endDate,
+      },
+    });
+    return response.data;
   },
 };
 

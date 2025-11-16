@@ -1,6 +1,8 @@
 package com.uhs.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uhs.dto.CategoryExpenseSummaryDto;
+import com.uhs.dto.CategoryTrendDto;
 import com.uhs.dto.ExpenseDto;
 import com.uhs.service.ExpenseService;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -115,6 +118,52 @@ class ExpenseControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(expenseService, times(1)).deleteExpense(1L);
+    }
+
+    @Test
+    void getExpensesByYearMonth_ShouldReturnCategorySummaries() throws Exception {
+        // Given
+        CategoryExpenseSummaryDto foodSummary = new CategoryExpenseSummaryDto("Food", new BigDecimal("80.00"), 2L);
+        CategoryExpenseSummaryDto transportSummary = new CategoryExpenseSummaryDto("Transport", new BigDecimal("100.00"), 1L);
+        List<CategoryExpenseSummaryDto> summaries = Arrays.asList(foodSummary, transportSummary);
+
+        when(expenseService.getExpensesByYearMonth(2024, 1)).thenReturn(summaries);
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/analytics")
+                        .param("year", "2024")
+                        .param("month", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].category").exists())
+                .andExpect(jsonPath("$[0].totalAmount").exists())
+                .andExpect(jsonPath("$[0].count").exists());
+
+        verify(expenseService, times(1)).getExpensesByYearMonth(2024, 1);
+    }
+
+    @Test
+    void getCategoryTrend_ShouldReturnTrendData() throws Exception {
+        // Given
+        CategoryTrendDto trend1 = new CategoryTrendDto(LocalDate.of(2024, 1, 5), new BigDecimal("80.00"));
+        CategoryTrendDto trend2 = new CategoryTrendDto(LocalDate.of(2024, 1, 15), new BigDecimal("25.00"));
+        List<CategoryTrendDto> trends = Arrays.asList(trend1, trend2);
+
+        when(expenseService.getCategoryTrend(eq("Food"), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(trends);
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/analytics/category/Food")
+                        .param("startDate", "2024-01-01T00:00:00")
+                        .param("endDate", "2024-01-31T23:59:59"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].date").exists())
+                .andExpect(jsonPath("$[0].amount").exists());
+
+        verify(expenseService, times(1)).getCategoryTrend(eq("Food"), any(LocalDateTime.class), any(LocalDateTime.class));
     }
 }
 
