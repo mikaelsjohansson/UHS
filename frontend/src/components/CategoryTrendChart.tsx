@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { CategoryTrend } from '../types/analytics';
 import { expenseService } from '../services/expenseService';
+import { formatCurrency } from '../utils/currency';
 import './CategoryTrendChart.css';
 
 interface CategoryTrendChartProps {
@@ -52,15 +53,6 @@ function CategoryTrendChart({ category, startYear, startMonth, endYear, endMonth
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
   };
 
   const formatDate = (dateStr: string) => {

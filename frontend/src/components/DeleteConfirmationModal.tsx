@@ -1,4 +1,5 @@
 import { Expense } from '../types/expense';
+import { formatCurrency } from '../utils/currency';
 import Modal from './Modal';
 import './DeleteConfirmationModal.css';
 
@@ -19,13 +20,6 @@ const DeleteConfirmationModal = ({
     return null;
   }
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
   return (
     <Modal isOpen={isOpen} onClose={onCancel} title="Delete Expense">
       <div className="delete-confirmation">
@@ -39,7 +33,7 @@ const DeleteConfirmationModal = ({
           </div>
           <div className="preview-item">
             <span className="preview-label">Amount:</span>
-            <span className="preview-value">{formatAmount(expense.amount)}</span>
+            <span className="preview-value">{formatCurrency(expense.amount)}</span>
           </div>
           {expense.category && (
             <div className="preview-item">

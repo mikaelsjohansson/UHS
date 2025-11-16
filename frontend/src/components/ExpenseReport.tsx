@@ -1,4 +1,5 @@
 import { CategoryExpenseSummary } from '../types/analytics';
+import { formatCurrency } from '../utils/currency';
 import './ExpenseReport.css';
 
 interface ExpenseReportProps {
@@ -8,13 +9,6 @@ interface ExpenseReportProps {
 function ExpenseReport({ data }: ExpenseReportProps) {
   const totalAmount = data.reduce((sum, item) => sum + item.totalAmount, 0);
   const totalCount = data.reduce((sum, item) => sum + item.count, 0);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  };
 
   const sortedData = [...data].sort((a, b) => b.totalAmount - a.totalAmount);
 

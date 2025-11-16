@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { CategoryExpenseSummary } from '../types/analytics';
+import { formatCurrency } from '../utils/currency';
 import './CategoryPieChart.css';
 
 interface CategoryPieChartProps {
@@ -16,13 +17,6 @@ function CategoryPieChart({ data }: CategoryPieChartProps) {
   }));
 
   const totalAmount = data.reduce((sum, item) => sum + item.totalAmount, 0);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {

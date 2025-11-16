@@ -1,4 +1,5 @@
 import { Expense } from '../types/expense';
+import { formatCurrency } from '../utils/currency';
 import './ExpenseList.css';
 
 interface ExpenseListProps {
@@ -15,13 +16,6 @@ const ExpenseList = ({ expenses, onEdit, onDelete }: ExpenseListProps) => {
       month: 'short',
       day: 'numeric',
     });
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   if (expenses.length === 0) {
@@ -46,7 +40,7 @@ const ExpenseList = ({ expenses, onEdit, onDelete }: ExpenseListProps) => {
             </div>
           </div>
           <div className="expense-right">
-            <span className="expense-amount">{formatAmount(expense.amount)}</span>
+            <span className="expense-amount">{formatCurrency(expense.amount)}</span>
             <div className="expense-actions">
               <button
                 onClick={() => onEdit(expense)}
