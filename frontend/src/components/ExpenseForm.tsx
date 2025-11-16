@@ -239,9 +239,14 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     }
   };
 
-  const handleDateKeyDown = () => {
-    // Enter key is handled by auto-opening picker on focus
-    // No additional handling needed
+  const handleDateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Move focus to category field instead of submitting form
+      setTimeout(() => {
+        categoryRef.current?.focus();
+      }, 0);
+    }
   };
 
   const handleCategoryKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {

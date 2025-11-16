@@ -493,6 +493,34 @@ describe('ExpenseForm', () => {
       });
     });
 
+    it('moves from date to category when Enter is pressed', async () => {
+      const user = userEvent.setup();
+      
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
+      });
+
+      const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
+      const categorySelect = screen.getByRole('combobox', { name: /category/i }) as HTMLSelectElement;
+
+      // Focus on date input
+      await user.click(dateInput);
+
+      // Press Enter
+      await user.keyboard('{Enter}');
+
+      // Verify focus moved to category field (not submitting form)
+      await waitFor(() => {
+        expect(document.activeElement).toBe(categorySelect);
+      });
+
+      // Verify form was NOT submitted
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    });
+
     it('submits form when Enter is pressed in category field', async () => {
       const user = userEvent.setup();
       mockOnSubmit.mockResolvedValue(undefined);
