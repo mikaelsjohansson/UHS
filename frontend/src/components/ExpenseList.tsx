@@ -37,10 +37,7 @@ const ExpenseList = ({ expenses, onEdit, onDelete }: ExpenseListProps) => {
       {expenses.map(expense => (
         <div key={expense.id} className="expense-item">
           <div className="expense-info">
-            <div className="expense-header">
-              <h3 className="expense-description">{expense.description}</h3>
-              <span className="expense-amount">{formatAmount(expense.amount)}</span>
-            </div>
+            <h3 className="expense-description">{expense.description}</h3>
             <div className="expense-details">
               <span className="expense-date">{formatDate(expense.expenseDate)}</span>
               {expense.category && (
@@ -48,21 +45,24 @@ const ExpenseList = ({ expenses, onEdit, onDelete }: ExpenseListProps) => {
               )}
             </div>
           </div>
-          <div className="expense-actions">
-            <button
-              onClick={() => onEdit(expense)}
-              className="btn-edit"
-              aria-label={`Edit expense: ${expense.description}`}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => onDelete(expense)}
-              className="btn-delete"
-              aria-label={`Delete expense: ${expense.description}`}
-            >
-              Delete
-            </button>
+          <div className="expense-right">
+            <span className="expense-amount">{formatAmount(expense.amount)}</span>
+            <div className="expense-actions">
+              <button
+                onClick={() => onEdit(expense)}
+                className="btn-edit"
+                aria-label={`Edit expense: ${expense.description}`}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => onDelete(expense)}
+                className="btn-delete"
+                aria-label={`Delete expense: ${expense.description}`}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       ))}
