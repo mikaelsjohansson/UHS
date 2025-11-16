@@ -118,5 +118,23 @@ describe('expenseService', () => {
       expect(mockDelete).toHaveBeenCalledWith('/1');
     });
   });
+
+  describe('getExpensesByMonth', () => {
+    it('should fetch expenses for a specific month', async () => {
+      const mockExpenses: Expense[] = [
+        { id: 1, description: 'Expense 1', amount: 100, expenseDate: '2024-01-15' },
+        { id: 2, description: 'Expense 2', amount: 200, expenseDate: '2024-01-20' },
+      ];
+
+      mockGet.mockResolvedValue({ data: mockExpenses });
+
+      const result = await expenseService.getExpensesByMonth(2024, 1);
+
+      expect(result).toEqual(mockExpenses);
+      expect(mockGet).toHaveBeenCalledWith('/month', {
+        params: { year: 2024, month: 1 },
+      });
+    });
+  });
 });
 

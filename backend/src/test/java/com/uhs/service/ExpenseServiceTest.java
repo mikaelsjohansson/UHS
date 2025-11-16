@@ -405,5 +405,53 @@ class ExpenseServiceTest {
         assertNull(result);
         verify(expenseRepository, never()).findByDescriptionIgnoreCase(anyString());
     }
+
+    @Test
+    void getExpensesByMonth_ShouldReturnListOfExpenseDtos() {
+        // Given
+        LocalDateTime expenseDate1 = LocalDateTime.of(2024, 1, 15, 10, 0);
+        LocalDateTime expenseDate2 = LocalDateTime.of(2024, 1, 20, 14, 30);
+        
+        Expense expense1 = new Expense();
+        expense1.setId(1L);
+        expense1.setDescription("Food Expense 1");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(expenseDate1);
+        expense1.setCategory("Food");
+        
+        Expense expense2 = new Expense();
+        expense2.setId(2L);
+        expense2.setDescription("Transport Expense");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(expenseDate2);
+        expense2.setCategory("Transport");
+        
+        List<Expense> expenses = Arrays.asList(expense1, expense2);
+        when(expenseRepository.findByExpenseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(expenses);
+
+        // When
+        List<ExpenseDto> result = expenseService.getExpensesByMonth(2024, 1);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("Food Expense 1", result.get(0).getDescription());
+        assertEquals(new BigDecimal("50.00"), result.get(0).getAmount());
+        assertEquals("Food", result.get(0).getCategory());
+        assertEquals("Transport Expense", result.get(1).getDescription());
+        assertEquals(new BigDecimal("100.00"), result.get(1).getAmount());
+        assertEquals("Transport", result.get(1).getCategory());
+        
+        verify(expenseRepository, times(1)).findByExpenseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    void getExpensesByMonth_WithInvalidMonth_ShouldThrowException() {
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> expenseService.getExpensesByMonth(2024, 13));
+        assertThrows(IllegalArgumentException.class, () -> expenseService.getExpensesByMonth(2024, 0));
+        verify(expenseRepository, never()).findByExpenseDateBetween(any(LocalDateTime.class), any(LocalDateTime.class));
+    }
 }
 

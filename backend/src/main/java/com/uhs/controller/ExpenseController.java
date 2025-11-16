@@ -85,5 +85,13 @@ public class ExpenseController {
         }
         return ResponseEntity.ok(categoryHint);
     }
+
+    @GetMapping("/month")
+    public ResponseEntity<List<ExpenseDto>> getExpensesByMonth(
+            @RequestParam("year") int year,
+            @RequestParam("month") int month) {
+        List<ExpenseDto> expenses = expenseService.getExpensesByMonth(year, month);
+        return ResponseEntity.ok(expenses);
+    }
 }
 

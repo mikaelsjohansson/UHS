@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Expense } from '../types/expense';
 import { expenseService } from '../services/expenseService';
 import ExpenseList from '../components/ExpenseList';
@@ -15,16 +15,17 @@ function ExpensesPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteExpense, setDeleteExpense] = useState<Expense | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  
+  // Get current month as default
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
 
-  useEffect(() => {
-    loadExpenses();
-  }, []);
-
-  const loadExpenses = async () => {
+  const loadExpenses = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await expenseService.getAllExpenses();
+      const data = await expenseService.getExpensesByMonth(selectedYear, selectedMonth);
       setExpenses(data);
     } catch (err) {
       setError('Failed to load expenses. Please try again.');
@@ -32,12 +33,17 @@ function ExpensesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedYear, selectedMonth]);
+
+  useEffect(() => {
+    loadExpenses();
+  }, [loadExpenses]);
 
   const handleCreateExpense = async (expenseData: Omit<Expense, 'id'>) => {
     try {
       const newExpense = await expenseService.createExpense(expenseData);
-      setExpenses([...expenses, newExpense]);
+      // Reload expenses to ensure we show the correct month's expenses
+      await loadExpenses();
       setError(null);
       setIsAddModalOpen(false);
     } catch (err) {
@@ -49,8 +55,9 @@ function ExpensesPage() {
 
   const handleUpdateExpense = async (id: number, expenseData: Omit<Expense, 'id'>) => {
     try {
-      const updatedExpense = await expenseService.updateExpense(id, expenseData);
-      setExpenses(expenses.map(exp => exp.id === id ? updatedExpense : exp));
+      await expenseService.updateExpense(id, expenseData);
+      // Reload expenses to ensure we show the correct month's expenses
+      await loadExpenses();
       setEditingExpense(null);
       setError(null);
     } catch (err) {
@@ -63,7 +70,8 @@ function ExpensesPage() {
   const handleDeleteExpense = async (id: number) => {
     try {
       await expenseService.deleteExpense(id);
-      setExpenses(expenses.filter(exp => exp.id !== id));
+      // Reload expenses to ensure we show the correct month's expenses
+      await loadExpenses();
       setError(null);
       setIsDeleteModalOpen(false);
       setDeleteExpense(null);
@@ -117,13 +125,31 @@ function ExpensesPage() {
         <section className="list-section">
           <div className="list-header">
             <h2>Expenses</h2>
-            <button
-              className="btn-add-expense"
-              onClick={handleAddClick}
-              aria-label="Add new expense"
-            >
-              Add Expense
-            </button>
+            <div className="header-controls">
+              <div className="month-selector">
+                <label htmlFor="month-select" className="month-select-label">
+                  Month:
+                </label>
+                <input
+                  id="month-select"
+                  type="month"
+                  value={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}`}
+                  onChange={(e) => {
+                    const [year, month] = e.target.value.split('-').map(Number);
+                    setSelectedYear(year);
+                    setSelectedMonth(month);
+                  }}
+                  className="month-input"
+                />
+              </div>
+              <button
+                className="btn-add-expense"
+                onClick={handleAddClick}
+                aria-label="Add new expense"
+              >
+                Add Expense
+              </button>
+            </div>
           </div>
           {loading ? (
             <div className="loading">Loading expenses...</div>

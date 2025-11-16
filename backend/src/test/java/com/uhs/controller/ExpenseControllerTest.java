@@ -210,5 +210,31 @@ class ExpenseControllerTest {
 
         verify(expenseService, times(1)).getCategoryHint("NonExistent");
     }
+
+    @Test
+    void getExpensesByMonth_ShouldReturnListOfExpenses() throws Exception {
+        // Given
+        ExpenseDto expense1 = new ExpenseDto(1L, "Food Expense", new BigDecimal("50.00"), 
+                LocalDateTime.of(2024, 1, 15, 10, 0), "Food");
+        ExpenseDto expense2 = new ExpenseDto(2L, "Transport Expense", new BigDecimal("100.00"), 
+                LocalDateTime.of(2024, 1, 20, 14, 30), "Transport");
+        List<ExpenseDto> expenses = Arrays.asList(expense1, expense2);
+
+        when(expenseService.getExpensesByMonth(2024, 1)).thenReturn(expenses);
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/month")
+                        .param("year", "2024")
+                        .param("month", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].description").value("Food Expense"))
+                .andExpect(jsonPath("$[0].amount").value(50.00))
+                .andExpect(jsonPath("$[1].description").value("Transport Expense"))
+                .andExpect(jsonPath("$[1].amount").value(100.00));
+
+        verify(expenseService, times(1)).getExpensesByMonth(2024, 1);
+    }
 }
 

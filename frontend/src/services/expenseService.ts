@@ -89,5 +89,12 @@ export const expenseService = {
       throw error;
     }
   },
+
+  getExpensesByMonth: async (year: number, month: number): Promise<Expense[]> => {
+    const response = await api.get<Expense[]>('/month', {
+      params: { year, month },
+    });
+    return response.data;
+  },
 };
 

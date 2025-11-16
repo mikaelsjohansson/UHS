@@ -203,5 +203,13 @@ public class ExpenseService {
                 .map(Map.Entry::getKey)
                 .orElse(null);
     }
+
+    public List<ExpenseDto> getExpensesByMonth(int year, int month) {
+        // Fetch in separate transaction, then convert outside transaction to release connection
+        List<Expense> expenses = fetchExpensesByYearMonth(year, month);
+        return expenses.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
 }
 

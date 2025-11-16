@@ -240,5 +240,141 @@ class ExpenseControllerIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0]").value("Skånetrafiken"));
     }
+
+    @Test
+    void getExpensesByMonth_WithExpensesInMonth_ShouldReturnOnlyExpensesForThatMonth() throws Exception {
+        // Given - Create expenses in different months
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("January Expense 1");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 15, 10, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("January Expense 2");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 20, 14, 30));
+        expense2.setCategory("Transport");
+        expenseService.createExpense(expense2);
+
+        ExpenseDto expense3 = new ExpenseDto();
+        expense3.setDescription("February Expense");
+        expense3.setAmount(new BigDecimal("75.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2024, 2, 10, 9, 0));
+        expense3.setCategory("Food");
+        expenseService.createExpense(expense3);
+
+        ExpenseDto expense4 = new ExpenseDto();
+        expense4.setDescription("December Expense");
+        expense4.setAmount(new BigDecimal("200.00"));
+        expense4.setExpenseDate(LocalDateTime.of(2023, 12, 25, 16, 0));
+        expense4.setCategory("Transport");
+        expenseService.createExpense(expense4);
+
+        // When & Then - Get expenses for January 2024
+        mockMvc.perform(get("/api/expenses/month")
+                        .param("year", "2024")
+                        .param("month", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].description").exists())
+                .andExpect(jsonPath("$[1].description").exists())
+                .andExpect(jsonPath("$[?(@.description == 'January Expense 1')]").exists())
+                .andExpect(jsonPath("$[?(@.description == 'January Expense 2')]").exists())
+                .andExpect(jsonPath("$[?(@.description == 'February Expense')]").doesNotExist())
+                .andExpect(jsonPath("$[?(@.description == 'December Expense')]").doesNotExist());
+    }
+
+    @Test
+    void getExpensesByMonth_WithNoExpensesInMonth_ShouldReturnEmptyList() throws Exception {
+        // Given - Create expenses in other months
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("January Expense");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 15, 10, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("March Expense");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 3, 10, 9, 0));
+        expense2.setCategory("Transport");
+        expenseService.createExpense(expense2);
+
+        // When & Then - Get expenses for February 2024 (no expenses)
+        mockMvc.perform(get("/api/expenses/month")
+                        .param("year", "2024")
+                        .param("month", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getExpensesByMonth_WithExpensesOnMonthBoundaries_ShouldIncludeAllDaysInMonth() throws Exception {
+        // Given - Create expenses on first and last day of month
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("First Day Expense");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 1, 1, 0, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("Last Day Expense");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 1, 31, 23, 59, 59));
+        expense2.setCategory("Transport");
+        expenseService.createExpense(expense2);
+
+        ExpenseDto expense3 = new ExpenseDto();
+        expense3.setDescription("Next Month First Day");
+        expense3.setAmount(new BigDecimal("75.00"));
+        expense3.setExpenseDate(LocalDateTime.of(2024, 2, 1, 0, 0));
+        expense3.setCategory("Food");
+        expenseService.createExpense(expense3);
+
+        // When & Then - Get expenses for January 2024
+        mockMvc.perform(get("/api/expenses/month")
+                        .param("year", "2024")
+                        .param("month", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.description == 'First Day Expense')]").exists())
+                .andExpect(jsonPath("$[?(@.description == 'Last Day Expense')]").exists())
+                .andExpect(jsonPath("$[?(@.description == 'Next Month First Day')]").doesNotExist());
+    }
+
+    @Test
+    void getExpensesByMonth_WithLeapYearFebruary_ShouldHandleCorrectly() throws Exception {
+        // Given - Create expenses in February of a leap year (2024 is a leap year)
+        ExpenseDto expense1 = new ExpenseDto();
+        expense1.setDescription("Leap Year Feb 29");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.of(2024, 2, 29, 12, 0));
+        expense1.setCategory("Food");
+        expenseService.createExpense(expense1);
+
+        ExpenseDto expense2 = new ExpenseDto();
+        expense2.setDescription("Leap Year Feb 28");
+        expense2.setAmount(new BigDecimal("100.00"));
+        expense2.setExpenseDate(LocalDateTime.of(2024, 2, 28, 12, 0));
+        expense2.setCategory("Transport");
+        expenseService.createExpense(expense2);
+
+        // When & Then - Get expenses for February 2024
+        mockMvc.perform(get("/api/expenses/month")
+                        .param("year", "2024")
+                        .param("month", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.description == 'Leap Year Feb 29')]").exists())
+                .andExpect(jsonPath("$[?(@.description == 'Leap Year Feb 28')]").exists());
+    }
 }
 
