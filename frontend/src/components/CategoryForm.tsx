@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Category, CategoryFormData } from '../types/category';
 import './CategoryForm.css';
 
@@ -14,6 +14,7 @@ const CategoryForm = ({ category, onSubmit, onCancel }: CategoryFormProps) => {
     description: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (category) {
@@ -26,6 +27,16 @@ const CategoryForm = ({ category, onSubmit, onCancel }: CategoryFormProps) => {
         name: '',
         description: '',
       });
+    }
+  }, [category]);
+
+  // Auto-focus name field when creating new category
+  useEffect(() => {
+    if (!category && nameInputRef.current) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        nameInputRef.current?.focus();
+      }, 0);
     }
   }, [category]);
 
@@ -66,6 +77,7 @@ const CategoryForm = ({ category, onSubmit, onCancel }: CategoryFormProps) => {
       <div className="form-group">
         <label htmlFor="name">Name *</label>
         <input
+          ref={nameInputRef}
           type="text"
           id="name"
           name="name"

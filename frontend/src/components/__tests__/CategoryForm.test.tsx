@@ -77,5 +77,31 @@ describe('CategoryForm', () => {
     // Form validation should prevent submission
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
+
+  it('auto-focuses name field when creating new category', async () => {
+    render(<CategoryForm onSubmit={mockOnSubmit} />);
+
+    const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
+
+    // Verify name field has focus when creating new category
+    await waitFor(() => {
+      expect(document.activeElement).toBe(nameInput);
+    });
+  });
+
+  it('does not auto-focus name field when editing a category', async () => {
+    const category: Category = {
+      id: 1,
+      name: 'Food',
+      description: 'Food and dining expenses',
+    };
+
+    render(<CategoryForm category={category} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+
+    const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
+
+    // Verify name field does NOT have focus when editing
+    expect(document.activeElement).not.toBe(nameInput);
+  });
 });
 
