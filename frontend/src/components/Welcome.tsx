@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { FaReceipt, FaTags, FaChartLine } from 'react-icons/fa';
 import './Welcome.css';
 
 function Welcome() {
@@ -12,14 +13,17 @@ function Welcome() {
         </p>
         <div className="welcome-features">
           <Link to="/expenses" className="feature-card feature-card-link">
+            <FaReceipt className="feature-icon" />
             <h3>Track Expenses</h3>
             <p>Add, edit, and delete your expenses with ease.</p>
           </Link>
           <Link to="/categories" className="feature-card feature-card-link">
+            <FaTags className="feature-icon" />
             <h3>Manage Categories</h3>
             <p>Create and manage your expense categories.</p>
           </Link>
           <Link to="/analytics" className="feature-card feature-card-link">
+            <FaChartLine className="feature-icon" />
             <h3>Analytics</h3>
             <p>View visual reports and track spending by category over time.</p>
           </Link>
