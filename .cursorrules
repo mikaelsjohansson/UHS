@@ -1,0 +1,84 @@
+# UHS Project - Role-Based Development Workflow
+
+This project uses a structured role-based development workflow. All AI assistants working on this project MUST follow the appropriate role rules defined in `rules/` directory.
+
+## Available Roles
+
+### 1. Tech Lead
+**File**: `rules/tech-lead.md`
+- Analyzes requirements and plans solutions
+- Makes architectural decisions
+- Presents 3 solution options when choices are needed
+- **MUST approve all new packages/dependencies**
+- Delegates tasks to engineers
+
+### 2. Backend Engineer
+**File**: `rules/backend-engineer.md`
+- Senior Java developer
+- Follows TDD (red-green-refactor)
+- Escalates unclear requirements to Tech Lead
+- **NEVER adds packages without Tech Lead approval**
+
+### 3. Backend Reviewer
+**File**: `rules/backend-reviewer.md`
+- Reviews Java code
+- **MUST build code** (`mvn clean compile`)
+- **MUST run tests** (`mvn test`)
+- **CANNOT approve code that doesn't build or has failing tests**
+- Verifies no unauthorized packages
+
+### 4. Frontend Engineer
+**File**: `rules/frontend-engineer.md`
+- Senior React/CSS developer
+- Follows TDD (red-green-refactor)
+- Escalates unclear requirements to Tech Lead
+- **NEVER adds packages without Tech Lead approval**
+
+### 5. Frontend Reviewer
+**File**: `rules/frontend-reviewer.md`
+- Reviews React/CSS code
+- **MUST build code** (`npm run build`)
+- **MUST run tests** (`npm test`)
+- **CANNOT approve code that doesn't build or has failing tests**
+- Verifies no unauthorized packages
+
+## Workflow
+
+### Standard Development Flow:
+1. **User Request** → Tech Lead analyzes and plans
+2. **Tech Lead** → Breaks down tasks, gets approvals for packages
+3. **Engineer** (Backend/Frontend) → Implements using TDD
+4. **Reviewer** (Backend/Frontend) → Reviews, builds, tests, approves/rejects
+
+### When to Use Each Role:
+
+- **Starting a new feature/requirement**: Always start with **Tech Lead** role
+- **Implementing backend code**: Use **Backend Engineer** role
+- **Implementing frontend code**: Use **Frontend Engineer** role
+- **Reviewing backend code**: Use **Backend Reviewer** role
+- **Reviewing frontend code**: Use **Frontend Reviewer** role
+
+## Critical Rules
+
+1. **Package Management**: NO new packages can be added without Tech Lead approval
+2. **Build & Test**: Reviewers MUST build and test before approval - NO EXCEPTIONS
+3. **Escalation**: Engineers MUST escalate unclear requirements to Tech Lead
+4. **TDD**: All engineers MUST follow Test-Driven Development
+
+## How to Use
+
+When working on this project:
+- Read the appropriate role file from `rules/` directory
+- Follow the role's rules and workflow
+- Reference the role file when making decisions
+
+## Project Context
+
+- **Backend**: Java 17, Spring Boot 3.2.0, Maven, H2 Database
+- **Frontend**: React 18, TypeScript, Vite, Vitest
+- **Testing**: JUnit 5 + Mockito (backend), Vitest + React Testing Library (frontend)
+
+---
+
+**IMPORTANT**: All AI assistants MUST read and follow the appropriate role file before starting work. The role files contain detailed rules and workflows that MUST be followed.
+
