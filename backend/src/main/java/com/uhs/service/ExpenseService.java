@@ -7,6 +7,7 @@ import com.uhs.model.Expense;
 import com.uhs.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -22,15 +23,21 @@ public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public List<Expense> fetchAllExpenses() {
+        // Fetch expenses in a separate transaction that closes immediately
+        return expenseRepository.findAll();
+    }
+    
     public List<ExpenseDto> getAllExpenses() {
-        return expenseRepository.findAll()
-                .stream()
+        // Fetch in separate transaction, then convert outside transaction to release connection
+        List<Expense> expenses = fetchAllExpenses();
+        return expenses.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public ExpenseDto getExpenseById(Long id) {
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Expense not found with id: " + id));
@@ -85,8 +92,8 @@ public class ExpenseService {
         return expense;
     }
 
-    @Transactional(readOnly = true)
-    public List<CategoryExpenseSummaryDto> getExpensesByYearMonth(int year, int month) {
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public List<Expense> fetchExpensesByYearMonth(int year, int month) {
         // Validate month range
         if (month < 1 || month > 12) {
             throw new IllegalArgumentException("Month must be between 1 and 12");
@@ -96,7 +103,12 @@ public class ExpenseService {
         LocalDateTime endOfMonth = LocalDateTime.of(year, month, 
                 startOfMonth.toLocalDate().lengthOfMonth(), 23, 59, 59);
         
-        List<Expense> expenses = expenseRepository.findByExpenseDateBetween(startOfMonth, endOfMonth);
+        return expenseRepository.findByExpenseDateBetween(startOfMonth, endOfMonth);
+    }
+    
+    public List<CategoryExpenseSummaryDto> getExpensesByYearMonth(int year, int month) {
+        // Fetch in separate transaction, then process outside transaction to release connection
+        List<Expense> expenses = fetchExpensesByYearMonth(year, month);
         
         Map<String, List<Expense>> groupedByCategory = expenses.stream()
                 .collect(Collectors.groupingBy(
@@ -117,9 +129,14 @@ public class ExpenseService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public List<Expense> fetchCategoryTrendExpenses(String category, LocalDateTime startDate, LocalDateTime endDate) {
+        return expenseRepository.findByCategoryAndExpenseDateBetween(category, startDate, endDate);
+    }
+    
     public List<CategoryTrendDto> getCategoryTrend(String category, LocalDateTime startDate, LocalDateTime endDate) {
-        List<Expense> expenses = expenseRepository.findByCategoryAndExpenseDateBetween(category, startDate, endDate);
+        // Fetch in separate transaction, then process outside transaction to release connection
+        List<Expense> expenses = fetchCategoryTrendExpenses(category, startDate, endDate);
         
         Map<LocalDate, List<Expense>> groupedByDate = expenses.stream()
                 .collect(Collectors.groupingBy(

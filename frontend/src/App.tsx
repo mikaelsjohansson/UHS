@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Welcome from './components/Welcome';
 import ExpensesPage from './pages/ExpensesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import CategoriesPage from './pages/CategoriesPage';
 import './App.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
           <Route index element={<Welcome />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

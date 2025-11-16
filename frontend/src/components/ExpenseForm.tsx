@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Expense, ExpenseFormData } from '../types/expense';
+import { categoryService } from '../services/categoryService';
+import { Category } from '../types/category';
 import './ExpenseForm.css';
 
 interface ExpenseFormProps {
@@ -16,6 +18,27 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     category: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const data = await categoryService.getAllCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error('Error loading categories:', err);
+        // Fallback to empty array if API fails
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     if (expense) {
@@ -25,6 +48,11 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
         expenseDate: expense.expenseDate.split('T')[0],
         category: expense.category || '',
       });
+      // Set selected category when editing
+      if (expense.category) {
+        const category = categories.find(cat => cat.name === expense.category);
+        setSelectedCategory(category || null);
+      }
     } else {
       setFormData({
         description: '',
@@ -32,12 +60,19 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
         expenseDate: new Date().toISOString().split('T')[0],
         category: '',
       });
+      setSelectedCategory(null);
     }
-  }, [expense]);
+  }, [expense, categories]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Update selected category when category select changes
+    if (name === 'category') {
+      const category = categories.find(cat => cat.name === value);
+      setSelectedCategory(category || null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,15 +155,20 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
           name="category"
           value={formData.category}
           onChange={handleChange}
+          disabled={loadingCategories}
         >
           <option value="">Select a category</option>
-          <option value="Food">Food</option>
-          <option value="Transport">Transport</option>
-          <option value="Shopping">Shopping</option>
-          <option value="Bills">Bills</option>
-          <option value="Entertainment">Entertainment</option>
-          <option value="Other">Other</option>
+          {categories.map(category => (
+            <option key={category.id} value={category.name}>
+              {category.name}
+            </option>
+          ))}
         </select>
+        {selectedCategory?.description && (
+          <div className="category-description">
+            {selectedCategory.description}
+          </div>
+        )}
       </div>
 
       <div className="form-actions">

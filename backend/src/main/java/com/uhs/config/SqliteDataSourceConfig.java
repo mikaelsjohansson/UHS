@@ -18,14 +18,21 @@ public class SqliteDataSourceConfig {
     @Value("${spring.datasource.url}")
     private String jdbcUrl;
 
+    @Value("${spring.datasource.hikari.connection-init-sql:PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=30000;}")
+    private String connectionInitSql;
+
     @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(jdbcUrl);
         config.setDriverClassName("org.sqlite.JDBC");
         
-        // Set PRAGMA statements
-        config.setConnectionInitSql("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;");
+        // Set PRAGMA statements from properties or use default
+        // WAL mode enables better concurrency
+        // busy_timeout allows SQLite to wait (in milliseconds) before giving up on a locked database
+        // This prevents SQLITE_BUSY errors in concurrent access scenarios
+        // Default timeout is 10000ms (10 seconds) for better concurrency handling
+        config.setConnectionInitSql(connectionInitSql);
         
         config.setMaximumPoolSize(10);
         config.setConnectionTimeout(30000);
@@ -54,6 +61,7 @@ public class SqliteDataSourceConfig {
         public Connection getConnection() throws SQLException {
             Connection conn = delegate.getConnection();
             // Disable autocommit if it's enabled
+            // This is critical for SQLite transaction handling
             if (conn.getAutoCommit()) {
                 conn.setAutoCommit(false);
             }
@@ -63,6 +71,8 @@ public class SqliteDataSourceConfig {
         @Override
         public Connection getConnection(String username, String password) throws SQLException {
             Connection conn = delegate.getConnection(username, password);
+            // Disable autocommit if it's enabled
+            // This is critical for SQLite transaction handling
             if (conn.getAutoCommit()) {
                 conn.setAutoCommit(false);
             }

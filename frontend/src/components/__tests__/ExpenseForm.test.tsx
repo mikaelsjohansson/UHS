@@ -1,8 +1,18 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ExpenseForm from '../ExpenseForm';
 import { Expense } from '../../types/expense';
+import { Category } from '../../types/category';
+
+// Mock categoryService
+vi.mock('../../services/categoryService', () => ({
+  categoryService: {
+    getAllCategories: vi.fn(),
+  },
+}));
+
+import { categoryService } from '../../services/categoryService';
 
 describe('ExpenseForm', () => {
   const mockOnSubmit = vi.fn();
@@ -10,6 +20,13 @@ describe('ExpenseForm', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock categories API response
+    const mockCategories: Category[] = [
+      { id: 1, name: 'Food', description: 'Food and dining expenses' },
+      { id: 2, name: 'Transport', description: 'Transportation expenses' },
+      { id: 3, name: 'Shopping', description: 'Shopping expenses' },
+    ];
+    vi.mocked(categoryService.getAllCategories).mockResolvedValue(mockCategories);
   });
 
   it('renders form fields correctly', () => {
@@ -22,7 +39,7 @@ describe('ExpenseForm', () => {
     expect(screen.getByRole('button', { name: /add expense/i })).toBeInTheDocument();
   });
 
-  it('pre-fills form when editing an expense', () => {
+  it('pre-fills form when editing an expense', async () => {
     const expense: Expense = {
       id: 1,
       description: 'Test Expense',
@@ -35,7 +52,12 @@ describe('ExpenseForm', () => {
 
     expect(screen.getByDisplayValue('Test Expense')).toBeInTheDocument();
     expect(screen.getByDisplayValue('100.5')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Food')).toBeInTheDocument();
+    
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Food')).toBeInTheDocument();
+    });
+    
     expect(screen.getByRole('button', { name: /update/i })).toBeInTheDocument();
   });
 
@@ -87,6 +109,25 @@ describe('ExpenseForm', () => {
 
     // Form validation should prevent submission
     expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('displays category description when a category is selected', async () => {
+    const user = userEvent.setup();
+
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+    });
+
+    // Select a category
+    await user.selectOptions(screen.getByLabelText(/category/i), 'Food');
+
+    // Verify description is displayed
+    await waitFor(() => {
+      expect(screen.getByText('Food and dining expenses')).toBeInTheDocument();
+    });
   });
 });
 

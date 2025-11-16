@@ -15,6 +15,10 @@ function Welcome() {
             <h3>Track Expenses</h3>
             <p>Add, edit, and delete your expenses with ease.</p>
           </Link>
+          <Link to="/categories" className="feature-card feature-card-link">
+            <h3>Manage Categories</h3>
+            <p>Create and manage your expense categories.</p>
+          </Link>
           <Link to="/analytics" className="feature-card feature-card-link">
             <h3>Analytics</h3>
             <p>View visual reports and track spending by category over time.</p>
