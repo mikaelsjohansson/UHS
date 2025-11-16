@@ -70,5 +70,20 @@ public class ExpenseController {
         List<CategoryTrendDto> trends = expenseService.getCategoryTrend(category, startDate, endDate);
         return ResponseEntity.ok(trends);
     }
+
+    @GetMapping("/suggestions")
+    public ResponseEntity<List<String>> getDescriptionSuggestions(@RequestParam("query") String query) {
+        List<String> suggestions = expenseService.getDescriptionSuggestions(query);
+        return ResponseEntity.ok(suggestions);
+    }
+
+    @GetMapping("/category-hint")
+    public ResponseEntity<String> getCategoryHint(@RequestParam("description") String description) {
+        String categoryHint = expenseService.getCategoryHint(description);
+        if (categoryHint == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(categoryHint);
+    }
 }
 

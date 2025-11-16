@@ -61,5 +61,33 @@ export const expenseService = {
     });
     return response.data;
   },
+
+  getDescriptionSuggestions: async (query: string): Promise<string[]> => {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+    const response = await api.get<string[]>('/suggestions', {
+      params: { query: query.trim() },
+    });
+    return response.data;
+  },
+
+  getCategoryHint: async (description: string): Promise<string | null> => {
+    if (!description || description.trim().length === 0) {
+      return null;
+    }
+    try {
+      const response = await api.get<string>('/category-hint', {
+        params: { description: description.trim() },
+      });
+      return response.data;
+    } catch (error: any) {
+      // If 204 No Content, return null
+      if (error.response?.status === 204) {
+        return null;
+      }
+      throw error;
+    }
+  },
 };
 

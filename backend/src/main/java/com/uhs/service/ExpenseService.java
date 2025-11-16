@@ -155,5 +155,53 @@ public class ExpenseService {
                 .sorted((a, b) -> a.getDate().compareTo(b.getDate()))
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public List<String> fetchDescriptionSuggestions(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return List.of();
+        }
+        return expenseRepository.findDistinctDescriptionsContainingIgnoreCase(query.trim());
+    }
+
+    public List<String> getDescriptionSuggestions(String query) {
+        // Fetch in separate transaction, then return outside transaction to release connection
+        return fetchDescriptionSuggestions(query);
+    }
+
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public List<Expense> fetchExpensesByDescription(String description) {
+        if (description == null || description.trim().isEmpty()) {
+            return List.of();
+        }
+        return expenseRepository.findByDescriptionIgnoreCase(description.trim());
+    }
+
+    public String getCategoryHint(String description) {
+        // Fetch in separate transaction, then process outside transaction to release connection
+        List<Expense> expenses = fetchExpensesByDescription(description);
+        
+        if (expenses.isEmpty()) {
+            return null;
+        }
+        
+        // Count categories and find the most common one
+        Map<String, Long> categoryCounts = expenses.stream()
+                .filter(expense -> expense.getCategory() != null && !expense.getCategory().trim().isEmpty())
+                .collect(Collectors.groupingBy(
+                        Expense::getCategory,
+                        Collectors.counting()
+                ));
+        
+        if (categoryCounts.isEmpty()) {
+            return null;
+        }
+        
+        // Return the category with the highest count
+        return categoryCounts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
+    }
 }
 

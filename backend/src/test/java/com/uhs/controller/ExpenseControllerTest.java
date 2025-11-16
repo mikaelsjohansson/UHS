@@ -165,5 +165,50 @@ class ExpenseControllerTest {
 
         verify(expenseService, times(1)).getCategoryTrend(eq("Food"), any(LocalDateTime.class), any(LocalDateTime.class));
     }
+
+    @Test
+    void getDescriptionSuggestions_ShouldReturnSuggestions() throws Exception {
+        // Given
+        List<String> suggestions = Arrays.asList("Skånetrafiken", "Skåne Express");
+        when(expenseService.getDescriptionSuggestions("skåne")).thenReturn(suggestions);
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/suggestions")
+                        .param("query", "skåne"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0]").value("Skånetrafiken"))
+                .andExpect(jsonPath("$[1]").value("Skåne Express"));
+
+        verify(expenseService, times(1)).getDescriptionSuggestions("skåne");
+    }
+
+    @Test
+    void getCategoryHint_WhenCategoryExists_ShouldReturnCategory() throws Exception {
+        // Given
+        when(expenseService.getCategoryHint("Skånetrafiken")).thenReturn("Transport");
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/category-hint")
+                        .param("description", "Skånetrafiken"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Transport"));
+
+        verify(expenseService, times(1)).getCategoryHint("Skånetrafiken");
+    }
+
+    @Test
+    void getCategoryHint_WhenNoCategoryExists_ShouldReturnNoContent() throws Exception {
+        // Given
+        when(expenseService.getCategoryHint("NonExistent")).thenReturn(null);
+
+        // When & Then
+        mockMvc.perform(get("/api/expenses/category-hint")
+                        .param("description", "NonExistent"))
+                .andExpect(status().isNoContent());
+
+        verify(expenseService, times(1)).getCategoryHint("NonExistent");
+    }
 }
 

@@ -269,5 +269,141 @@ class ExpenseServiceTest {
         
         verify(expenseRepository, times(1)).findByCategoryAndExpenseDateBetween(category, startDate, endDate);
     }
+
+    @Test
+    void getDescriptionSuggestions_ShouldReturnMatchingDescriptions() {
+        // Given
+        String query = "skåne";
+        List<String> suggestions = Arrays.asList("Skånetrafiken", "Skåne Express");
+        when(expenseRepository.findDistinctDescriptionsContainingIgnoreCase(query))
+                .thenReturn(suggestions);
+
+        // When
+        List<String> result = expenseService.getDescriptionSuggestions(query);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertTrue(result.contains("Skånetrafiken"));
+        assertTrue(result.contains("Skåne Express"));
+        verify(expenseRepository, times(1)).findDistinctDescriptionsContainingIgnoreCase(query);
+    }
+
+    @Test
+    void getDescriptionSuggestions_WithEmptyQuery_ShouldReturnEmptyList() {
+        // When
+        List<String> result = expenseService.getDescriptionSuggestions("");
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(expenseRepository, never()).findDistinctDescriptionsContainingIgnoreCase(anyString());
+    }
+
+    @Test
+    void getDescriptionSuggestions_WithNullQuery_ShouldReturnEmptyList() {
+        // When
+        List<String> result = expenseService.getDescriptionSuggestions(null);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(expenseRepository, never()).findDistinctDescriptionsContainingIgnoreCase(anyString());
+    }
+
+    @Test
+    void getCategoryHint_WhenExpensesExist_ShouldReturnMostCommonCategory() {
+        // Given
+        String description = "Skånetrafiken";
+        
+        Expense expense1 = new Expense();
+        expense1.setId(1L);
+        expense1.setDescription("Skånetrafiken");
+        expense1.setCategory("Transport");
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.now());
+        
+        Expense expense2 = new Expense();
+        expense2.setId(2L);
+        expense2.setDescription("Skånetrafiken");
+        expense2.setCategory("Transport");
+        expense2.setAmount(new BigDecimal("50.00"));
+        expense2.setExpenseDate(LocalDateTime.now());
+        
+        Expense expense3 = new Expense();
+        expense3.setId(3L);
+        expense3.setDescription("Skånetrafiken");
+        expense3.setCategory("Food");
+        expense3.setAmount(new BigDecimal("50.00"));
+        expense3.setExpenseDate(LocalDateTime.now());
+        
+        List<Expense> expenses = Arrays.asList(expense1, expense2, expense3);
+        when(expenseRepository.findByDescriptionIgnoreCase(description)).thenReturn(expenses);
+
+        // When
+        String result = expenseService.getCategoryHint(description);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Transport", result); // Most common category
+        verify(expenseRepository, times(1)).findByDescriptionIgnoreCase(description);
+    }
+
+    @Test
+    void getCategoryHint_WhenNoExpensesExist_ShouldReturnNull() {
+        // Given
+        String description = "NonExistent";
+        when(expenseRepository.findByDescriptionIgnoreCase(description)).thenReturn(List.of());
+
+        // When
+        String result = expenseService.getCategoryHint(description);
+
+        // Then
+        assertNull(result);
+        verify(expenseRepository, times(1)).findByDescriptionIgnoreCase(description);
+    }
+
+    @Test
+    void getCategoryHint_WhenExpensesHaveNoCategory_ShouldReturnNull() {
+        // Given
+        String description = "Skånetrafiken";
+        
+        Expense expense1 = new Expense();
+        expense1.setId(1L);
+        expense1.setDescription("Skånetrafiken");
+        expense1.setCategory(null);
+        expense1.setAmount(new BigDecimal("50.00"));
+        expense1.setExpenseDate(LocalDateTime.now());
+        
+        List<Expense> expenses = Arrays.asList(expense1);
+        when(expenseRepository.findByDescriptionIgnoreCase(description)).thenReturn(expenses);
+
+        // When
+        String result = expenseService.getCategoryHint(description);
+
+        // Then
+        assertNull(result);
+        verify(expenseRepository, times(1)).findByDescriptionIgnoreCase(description);
+    }
+
+    @Test
+    void getCategoryHint_WithEmptyDescription_ShouldReturnNull() {
+        // When
+        String result = expenseService.getCategoryHint("");
+
+        // Then
+        assertNull(result);
+        verify(expenseRepository, never()).findByDescriptionIgnoreCase(anyString());
+    }
+
+    @Test
+    void getCategoryHint_WithNullDescription_ShouldReturnNull() {
+        // When
+        String result = expenseService.getCategoryHint(null);
+
+        // Then
+        assertNull(result);
+        verify(expenseRepository, never()).findByDescriptionIgnoreCase(anyString());
+    }
 }
 

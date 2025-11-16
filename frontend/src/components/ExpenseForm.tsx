@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Expense, ExpenseFormData } from '../types/expense';
 import { categoryService } from '../services/categoryService';
+import { expenseService } from '../services/expenseService';
 import { Category } from '../types/category';
 import './ExpenseForm.css';
 
@@ -21,6 +22,13 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -73,7 +81,117 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
       const category = categories.find(cat => cat.name === value);
       setSelectedCategory(category || null);
     }
+    
+    // Handle description changes for autocomplete
+    if (name === 'description') {
+      // Clear previous debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      
+      // If description is empty, hide suggestions
+      if (value.trim().length === 0) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+        return;
+      }
+      
+      // Reset selected index when typing
+      setSelectedSuggestionIndex(-1);
+      
+      // Debounce API call
+      debounceTimerRef.current = setTimeout(async () => {
+        if (value.trim().length > 0) {
+          setIsLoadingSuggestions(true);
+          try {
+            const suggestionsList = await expenseService.getDescriptionSuggestions(value);
+            setSuggestions(suggestionsList);
+            setShowSuggestions(suggestionsList.length > 0);
+            setSelectedSuggestionIndex(-1); // Reset selection when new suggestions arrive
+          } catch (err) {
+            console.error('Error loading suggestions:', err);
+            setSuggestions([]);
+            setShowSuggestions(false);
+            setSelectedSuggestionIndex(-1);
+          } finally {
+            setIsLoadingSuggestions(false);
+          }
+        }
+      }, 300); // 300ms debounce
+    }
   };
+
+  const handleSuggestionClick = async (suggestion: string) => {
+    setFormData(prev => ({ ...prev, description: suggestion }));
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setSelectedSuggestionIndex(-1);
+    
+    // Fetch category hint for the selected suggestion
+    try {
+      const categoryHint = await expenseService.getCategoryHint(suggestion);
+      if (categoryHint) {
+        setFormData(prev => ({ ...prev, category: categoryHint }));
+        const category = categories.find(cat => cat.name === categoryHint);
+        setSelectedCategory(category || null);
+      }
+    } catch (err) {
+      console.error('Error loading category hint:', err);
+    }
+  };
+
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) {
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedSuggestionIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedSuggestionIndex(prev => (prev > 0 ? prev - 1 : -1));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
+          await handleSuggestionClick(suggestions[selectedSuggestionIndex]);
+        } else if (suggestions.length > 0) {
+          // If no selection, use first suggestion
+          await handleSuggestionClick(suggestions[0]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+        break;
+    }
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,15 +228,43 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     <form onSubmit={handleSubmit} className="expense-form">
       <div className="form-group">
         <label htmlFor="description">Description *</label>
-        <input
-          type="text"
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-          placeholder="Enter expense description"
-        />
+        <div className="autocomplete-wrapper">
+          <input
+            ref={inputRef}
+            type="text"
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => {
+              if (suggestions.length > 0) {
+                setShowSuggestions(true);
+              }
+            }}
+            required
+            placeholder="Enter expense description"
+            autoComplete="off"
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <div ref={suggestionsRef} className="suggestions-dropdown">
+              {isLoadingSuggestions ? (
+                <div className="suggestion-item">Loading...</div>
+              ) : (
+                suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                  >
+                    {suggestion}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="form-group">

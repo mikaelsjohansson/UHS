@@ -12,7 +12,16 @@ vi.mock('../../services/categoryService', () => ({
   },
 }));
 
+// Mock expenseService
+vi.mock('../../services/expenseService', () => ({
+  expenseService: {
+    getDescriptionSuggestions: vi.fn(),
+    getCategoryHint: vi.fn(),
+  },
+}));
+
 import { categoryService } from '../../services/categoryService';
+import { expenseService } from '../../services/expenseService';
 
 describe('ExpenseForm', () => {
   const mockOnSubmit = vi.fn();
@@ -127,6 +136,195 @@ describe('ExpenseForm', () => {
     // Verify description is displayed
     await waitFor(() => {
       expect(screen.getByText('Food and dining expenses')).toBeInTheDocument();
+    });
+  });
+
+  it('shows autocomplete suggestions when typing in description field', async () => {
+    const user = userEvent.setup();
+    const mockSuggestions = ['Skånetrafiken', 'Skåne Express', 'Skåne Resor'];
+    
+    vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    const descriptionInput = screen.getByLabelText(/description/i);
+    await user.type(descriptionInput, 'skåne');
+
+    // Wait for debounce and API call
+    await waitFor(() => {
+      expect(expenseService.getDescriptionSuggestions).toHaveBeenCalledWith('skåne');
+    }, { timeout: 1000 });
+
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+      expect(screen.getByText('Skåne Express')).toBeInTheDocument();
+    });
+  });
+
+  it('fills description and category when suggestion is clicked', async () => {
+    const user = userEvent.setup();
+    const mockSuggestions = ['Skånetrafiken'];
+    const mockCategoryHint = 'Transport';
+    
+    vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+    vi.mocked(expenseService.getCategoryHint).mockResolvedValue(mockCategoryHint);
+
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    const descriptionInput = screen.getByLabelText(/description/i);
+    await user.type(descriptionInput, 'skåne');
+
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+    });
+
+    // Click on suggestion
+    await user.click(screen.getByText('Skånetrafiken'));
+
+    // Verify description is filled
+    await waitFor(() => {
+      expect(descriptionInput).toHaveValue('Skånetrafiken');
+    });
+
+    // Verify category hint was fetched and category is set
+    await waitFor(() => {
+      expect(expenseService.getCategoryHint).toHaveBeenCalledWith('Skånetrafiken');
+    });
+
+    // Wait for categories to load and verify category is selected
+    await waitFor(() => {
+      const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
+      expect(categorySelect.value).toBe('Transport');
+    });
+  });
+
+  it('hides suggestions when clicking outside', async () => {
+    const user = userEvent.setup();
+    const mockSuggestions = ['Skånetrafiken'];
+    
+    vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    const descriptionInput = screen.getByLabelText(/description/i);
+    await user.type(descriptionInput, 'skåne');
+
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+    });
+
+    // Click outside (on the form)
+    await user.click(document.body);
+
+    // Verify suggestions are hidden
+    await waitFor(() => {
+      expect(screen.queryByText('Skånetrafiken')).not.toBeInTheDocument();
+    });
+  });
+
+  it('does not show suggestions for empty description', async () => {
+    const user = userEvent.setup();
+    
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    const descriptionInput = screen.getByLabelText(/description/i);
+    await user.type(descriptionInput, 'test');
+    await user.clear(descriptionInput);
+
+    // Wait a bit to ensure debounce completes
+    await waitFor(() => {
+      expect(expenseService.getDescriptionSuggestions).not.toHaveBeenCalled();
+    }, { timeout: 500 });
+  });
+
+  it('selects suggestion with Enter key', async () => {
+    const user = userEvent.setup();
+    const mockSuggestions = ['Skånetrafiken', 'Skåne Express'];
+    const mockCategoryHint = 'Transport';
+    
+    vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+    vi.mocked(expenseService.getCategoryHint).mockResolvedValue(mockCategoryHint);
+
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    const descriptionInput = screen.getByLabelText(/description/i);
+    await user.type(descriptionInput, 'skåne');
+
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+    });
+
+    // Press Enter to select first suggestion
+    await user.keyboard('{Enter}');
+
+    // Verify description is filled
+    await waitFor(() => {
+      expect(descriptionInput).toHaveValue('Skånetrafiken');
+    });
+
+    // Verify category hint was fetched
+    await waitFor(() => {
+      expect(expenseService.getCategoryHint).toHaveBeenCalledWith('Skånetrafiken');
+    });
+  });
+
+  it('navigates suggestions with arrow keys and selects with Enter', async () => {
+    const user = userEvent.setup();
+    const mockSuggestions = ['Skånetrafiken', 'Skåne Express', 'Skåne Resor'];
+    
+    vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    const descriptionInput = screen.getByLabelText(/description/i);
+    await user.type(descriptionInput, 'skåne');
+
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+    });
+
+    // Navigate down with arrow key
+    await user.keyboard('{ArrowDown}');
+    
+    // Navigate down again
+    await user.keyboard('{ArrowDown}');
+
+    // Press Enter to select
+    await user.keyboard('{Enter}');
+
+    // Verify second suggestion was selected
+    await waitFor(() => {
+      expect(descriptionInput).toHaveValue('Skåne Express');
+    });
+  });
+
+  it('closes suggestions with Escape key', async () => {
+    const user = userEvent.setup();
+    const mockSuggestions = ['Skånetrafiken'];
+    
+    vi.mocked(expenseService.getDescriptionSuggestions).mockResolvedValue(mockSuggestions);
+
+    render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+    const descriptionInput = screen.getByLabelText(/description/i);
+    await user.type(descriptionInput, 'skåne');
+
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.getByText('Skånetrafiken')).toBeInTheDocument();
+    });
+
+    // Press Escape to close
+    await user.keyboard('{Escape}');
+
+    // Verify suggestions are hidden
+    await waitFor(() => {
+      expect(screen.queryByText('Skånetrafiken')).not.toBeInTheDocument();
     });
   });
 });
