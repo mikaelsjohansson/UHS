@@ -41,7 +41,7 @@ function ExpensesPage() {
 
   const handleCreateExpense = async (expenseData: Omit<Expense, 'id'>) => {
     try {
-      const newExpense = await expenseService.createExpense(expenseData);
+      await expenseService.createExpense(expenseData);
       // Reload expenses to ensure we show the correct month's expenses
       await loadExpenses();
       setError(null);

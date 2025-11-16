@@ -3,6 +3,8 @@ import { Expense, ExpenseFormData } from '../types/expense';
 import { categoryService } from '../services/categoryService';
 import { expenseService } from '../services/expenseService';
 import { Category } from '../types/category';
+import Modal from './Modal';
+import CategoryForm from './CategoryForm';
 import './ExpenseForm.css';
 
 interface ExpenseFormProps {
@@ -26,6 +28,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
+  const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
@@ -51,6 +54,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     loadCategories();
   }, []);
 
+  // Update form when expense prop changes (for editing)
   useEffect(() => {
     if (expense) {
       setFormData({
@@ -64,16 +68,18 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
         const category = categories.find(cat => cat.name === expense.category);
         setSelectedCategory(category || null);
       }
-    } else {
-      setFormData({
-        description: '',
-        amount: '',
-        expenseDate: new Date().toISOString().split('T')[0],
-        category: '',
-      });
-      setSelectedCategory(null);
     }
-  }, [expense, categories]);
+    // Note: We don't reset form when expense is null to preserve user input
+    // Form is only reset when expense prop actually changes from a value to null
+  }, [expense]);
+
+  // Update selected category when categories list changes (e.g., after creating new category)
+  useEffect(() => {
+    if (formData.category && categories.length > 0) {
+      const category = categories.find(cat => cat.name === formData.category);
+      setSelectedCategory(category || null);
+    }
+  }, [categories, formData.category]);
 
   // Auto-focus description field when creating new expense
   useEffect(() => {
@@ -249,6 +255,37 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
     }
   };
 
+  const handleCreateCategory = async (categoryData: Omit<Category, 'id'>) => {
+    try {
+      const newCategory = await categoryService.createCategory(categoryData);
+      // Refresh category list
+      const updatedCategories = await categoryService.getAllCategories();
+      // Find the newly created category in the updated list
+      const category = updatedCategories.find(cat => cat.id === newCategory.id);
+      
+      // Update categories first, then select the new category
+      setCategories(updatedCategories);
+      
+      // Use setTimeout to ensure categories are updated before selecting
+      setTimeout(() => {
+        if (category) {
+          setFormData(prev => ({ ...prev, category: category.name }));
+          setSelectedCategory(category);
+        }
+      }, 0);
+      
+      // Close modal
+      setIsCreateCategoryModalOpen(false);
+    } catch (err) {
+      console.error('Error creating category:', err);
+      throw err;
+    }
+  };
+
+  const handleCloseCreateCategoryModal = () => {
+    setIsCreateCategoryModalOpen(false);
+  };
+
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -300,6 +337,7 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="expense-form">
       <div className="form-group">
         <label htmlFor="description">Description *</label>
@@ -375,22 +413,33 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
 
       <div className="form-group">
         <label htmlFor="category">Category</label>
-        <select
-          ref={categoryRef}
-          id="category"
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          onKeyDown={handleCategoryKeyDown}
-          disabled={loadingCategories}
-        >
-          <option value="">Select a category</option>
-          {categories.map(category => (
-            <option key={category.id} value={category.name}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <div className="category-input-wrapper">
+          <select
+            ref={categoryRef}
+            id="category"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            onKeyDown={handleCategoryKeyDown}
+            disabled={loadingCategories}
+          >
+            <option value="">Select a category</option>
+            {categories.map(category => (
+              <option key={category.id} value={category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn-create-category"
+            onClick={() => setIsCreateCategoryModalOpen(true)}
+            aria-label="Add new category"
+            disabled={loadingCategories}
+          >
+            +
+          </button>
+        </div>
         {selectedCategory?.description && (
           <div className="category-description">
             {selectedCategory.description}
@@ -418,6 +467,18 @@ const ExpenseForm = ({ expense, onSubmit, onCancel }: ExpenseFormProps) => {
         </button>
       </div>
     </form>
+
+    <Modal
+      isOpen={isCreateCategoryModalOpen}
+      onClose={handleCloseCreateCategoryModal}
+      title="Create New Category"
+    >
+      <CategoryForm
+        onSubmit={handleCreateCategory}
+        onCancel={handleCloseCreateCategoryModal}
+      />
+    </Modal>
+    </>
   );
 };
 

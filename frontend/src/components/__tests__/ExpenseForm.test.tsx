@@ -9,6 +9,7 @@ import { Category } from '../../types/category';
 vi.mock('../../services/categoryService', () => ({
   categoryService: {
     getAllCategories: vi.fn(),
+    createCategory: vi.fn(),
   },
 }));
 
@@ -18,6 +19,33 @@ vi.mock('../../services/expenseService', () => ({
     getDescriptionSuggestions: vi.fn(),
     getCategoryHint: vi.fn(),
   },
+}));
+
+// Mock Modal and CategoryForm components
+vi.mock('../Modal', () => ({
+  default: ({ isOpen, onClose, title, children }: any) => {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="modal">
+        {title && <h2>{title}</h2>}
+        <button onClick={onClose} aria-label="Close modal">×</button>
+        {children}
+      </div>
+    );
+  },
+}));
+
+vi.mock('../CategoryForm', () => ({
+  default: ({ onSubmit, onCancel }: any) => (
+    <div data-testid="category-form">
+      <input aria-label="Category name" />
+      <textarea aria-label="Category description" />
+      <button onClick={() => onSubmit({ name: 'New Category', description: '' })}>
+        Add Category
+      </button>
+      {onCancel && <button onClick={onCancel}>Cancel</button>}
+    </div>
+  ),
 }));
 
 import { categoryService } from '../../services/categoryService';
@@ -44,7 +72,7 @@ describe('ExpenseForm', () => {
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/amount/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add expense/i })).toBeInTheDocument();
   });
 
@@ -53,7 +81,7 @@ describe('ExpenseForm', () => {
 
     // Wait for categories to load
     await waitFor(() => {
-      expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
     });
 
     const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
@@ -77,7 +105,7 @@ describe('ExpenseForm', () => {
 
     // Wait for categories to load
     await waitFor(() => {
-      expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
     });
 
     const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
@@ -116,7 +144,7 @@ describe('ExpenseForm', () => {
 
     await user.type(screen.getByLabelText(/description/i), 'New Expense');
     await user.type(screen.getByLabelText(/amount/i), '50.75');
-    await user.selectOptions(screen.getByLabelText(/category/i), 'Food');
+    await user.selectOptions(screen.getByRole('combobox', { name: /category/i }), 'Food');
 
     await user.click(screen.getByRole('button', { name: /add expense/i }));
 
@@ -165,11 +193,11 @@ describe('ExpenseForm', () => {
 
     // Wait for categories to load
     await waitFor(() => {
-      expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
     });
 
     // Select a category
-    await user.selectOptions(screen.getByLabelText(/category/i), 'Food');
+    await user.selectOptions(screen.getByRole('combobox', { name: /category/i }), 'Food');
 
     // Verify description is displayed
     await waitFor(() => {
@@ -233,7 +261,7 @@ describe('ExpenseForm', () => {
 
     // Wait for categories to load and verify category is selected
     await waitFor(() => {
-      const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
+      const categorySelect = screen.getByRole('combobox', { name: /category/i }) as HTMLSelectElement;
       expect(categorySelect.value).toBe('Transport');
     });
   });
@@ -417,7 +445,7 @@ describe('ExpenseForm', () => {
 
       // Wait for categories to load
       await waitFor(() => {
-        expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
       });
 
       const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
@@ -446,11 +474,11 @@ describe('ExpenseForm', () => {
 
       // Wait for categories to load
       await waitFor(() => {
-        expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
       });
 
       const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
-      const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
+      const categorySelect = screen.getByRole('combobox', { name: /category/i }) as HTMLSelectElement;
 
       // Focus on date input
       await user.click(dateInput);
@@ -473,14 +501,14 @@ describe('ExpenseForm', () => {
 
       // Wait for categories to load
       await waitFor(() => {
-        expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
       });
 
       // Fill required fields
       await user.type(screen.getByLabelText(/description/i), 'Test expense');
       await user.type(screen.getByLabelText(/amount/i), '100.50');
       
-      const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
+      const categorySelect = screen.getByRole('combobox', { name: /category/i }) as HTMLSelectElement;
       
       // Focus on category and select one
       await user.selectOptions(categorySelect, 'Food');
@@ -555,6 +583,190 @@ describe('ExpenseForm', () => {
       await waitFor(() => {
         expect(document.activeElement).toBe(amountInput);
       });
+    });
+  });
+
+  describe('Create category from expense form', () => {
+    it('displays a create category button with + icon', async () => {
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
+      });
+
+      // Find the create category button by aria-label
+      const createButton = screen.getByRole('button', { name: /add new category/i });
+      expect(createButton).toBeInTheDocument();
+    });
+
+    it('opens modal with CategoryForm when create category button is clicked', async () => {
+      const user = userEvent.setup();
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
+      });
+
+      const createButton = screen.getByRole('button', { name: /add new category/i });
+      await user.click(createButton);
+
+      // Verify modal is open with CategoryForm
+      await waitFor(() => {
+        expect(screen.getByTestId('modal')).toBeInTheDocument();
+        expect(screen.getByTestId('category-form')).toBeInTheDocument();
+      });
+    });
+
+    it('creates category and updates category list when category form is submitted', async () => {
+      const user = userEvent.setup();
+      const newCategory: Category = {
+        id: 4,
+        name: 'New Category',
+        description: '',
+      };
+
+      const initialCategories: Category[] = [
+        { id: 1, name: 'Food', description: 'Food and dining expenses' },
+        { id: 2, name: 'Transport', description: 'Transportation expenses' },
+        { id: 3, name: 'Shopping', description: 'Shopping expenses' },
+      ];
+
+      const updatedCategories: Category[] = [...initialCategories, newCategory];
+
+      vi.mocked(categoryService.createCategory).mockResolvedValue(newCategory);
+      
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for initial categories to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
+      });
+
+      // Now set up the mock for the refresh call
+      vi.mocked(categoryService.getAllCategories).mockResolvedValue(updatedCategories);
+
+      // Open create category modal
+      const createButton = screen.getByRole('button', { name: /add new category/i });
+      await user.click(createButton);
+
+      // Wait for modal to open
+      await waitFor(() => {
+        expect(screen.getByTestId('category-form')).toBeInTheDocument();
+      });
+
+      // Submit category form
+      const addCategoryButton = screen.getByRole('button', { name: /add category/i });
+      await user.click(addCategoryButton);
+
+      // Verify category was created
+      await waitFor(() => {
+        expect(categoryService.createCategory).toHaveBeenCalledWith({
+          name: 'New Category',
+          description: '',
+        });
+      });
+
+      // Verify category list was refreshed
+      await waitFor(() => {
+        expect(categoryService.getAllCategories).toHaveBeenCalledTimes(2); // Initial load + refresh
+      });
+
+      // Verify modal is closed
+      await waitFor(() => {
+        expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      });
+
+      // Verify new category is selected in the dropdown
+      await waitFor(() => {
+        const categorySelect = screen.getByRole('combobox', { name: /category/i }) as HTMLSelectElement;
+        expect(categorySelect.value).toBe('New Category');
+      }, { timeout: 3000 });
+    });
+
+    it('closes modal when cancel is clicked in category form', async () => {
+      const user = userEvent.setup();
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
+      });
+
+      // Open create category modal
+      const createButton = screen.getByRole('button', { name: /add new category/i });
+      await user.click(createButton);
+
+      // Wait for modal to open
+      await waitFor(() => {
+        expect(screen.getByTestId('category-form')).toBeInTheDocument();
+      });
+
+      // Click cancel
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      await user.click(cancelButton);
+
+      // Verify modal is closed
+      await waitFor(() => {
+        expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      });
+
+      // Verify category was not created
+      expect(categoryService.createCategory).not.toHaveBeenCalled();
+    });
+
+    it('preserves form values when category modal is opened and closed', async () => {
+      const user = userEvent.setup();
+      render(<ExpenseForm onSubmit={mockOnSubmit} />);
+
+      // Wait for categories to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument();
+      });
+
+      // Fill in form fields
+      const descriptionInput = screen.getByLabelText(/description/i) as HTMLInputElement;
+      const amountInput = screen.getByLabelText(/amount/i) as HTMLInputElement;
+      const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
+
+      await user.type(descriptionInput, 'Test Expense');
+      await user.type(amountInput, '100.50');
+      await user.clear(dateInput);
+      await user.type(dateInput, '2024-12-25');
+
+      // Verify values are set
+      expect(descriptionInput.value).toBe('Test Expense');
+      expect(amountInput.value).toBe('100.5'); // Number input normalizes trailing zeros
+      expect(dateInput.value).toBe('2024-12-25');
+
+      // Open create category modal
+      const createButton = screen.getByRole('button', { name: /add new category/i });
+      await user.click(createButton);
+
+      // Wait for modal to open
+      await waitFor(() => {
+        expect(screen.getByTestId('modal')).toBeInTheDocument();
+      });
+
+      // Verify form values are still preserved
+      expect(descriptionInput.value).toBe('Test Expense');
+      expect(amountInput.value).toBe('100.5'); // Number input normalizes trailing zeros
+      expect(dateInput.value).toBe('2024-12-25');
+
+      // Close modal by clicking cancel
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      await user.click(cancelButton);
+
+      // Wait for modal to close
+      await waitFor(() => {
+        expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      });
+
+      // Verify form values are still preserved after closing modal
+      expect(descriptionInput.value).toBe('Test Expense');
+      expect(amountInput.value).toBe('100.5'); // Number input normalizes trailing zeros
+      expect(dateInput.value).toBe('2024-12-25');
     });
   });
 });
