@@ -19,7 +19,8 @@ import java.time.LocalDateTime;
 public class Expense {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "expense_seq")
+    @SequenceGenerator(name = "expense_seq", sequenceName = "expense_sequence", allocationSize = 1)
     private Long id;
 
     @NotBlank(message = "Description is required")
