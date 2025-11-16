@@ -1,5 +1,30 @@
 # UHS Project - Role-Based Development Workflow
 
+# 🚨 MANDATORY WORKFLOW 🚨
+
+**EVERY new feature/requirement MUST follow this sequence:**
+1. **START** as **Tech Lead** (read `rules/tech-lead.md`) - Analyze and plan
+2. **THEN** switch to **Engineer** (read appropriate engineer role file) - Implement using TDD
+3. **FINALLY** switch to **Reviewer** (read appropriate reviewer role file) - Build, test, and review
+
+**⚠️ CRITICAL RULES:**
+- **DO NOT skip steps**
+- **DO NOT implement without Tech Lead analysis first**
+- **DO NOT skip TDD (red-green-refactor cycle)**
+- **DO NOT approve code without building and testing**
+
+**Before starting ANY implementation, ask yourself:**
+- [ ] Have I read the Tech Lead role file?
+- [ ] Have I analyzed the requirement as Tech Lead?
+- [ ] Have I broken down tasks?
+- [ ] Have I gotten package approvals (if needed)?
+- [ ] Am I following TDD (for engineers)?
+- [ ] Will I build and test (for reviewers)?
+
+**If you answered NO to any of the above, STOP and follow the proper workflow.**
+
+---
+
 This project uses a structured role-based development workflow. All AI assistants working on this project MUST follow the appropriate role rules defined in `rules/` directory.
 
 ## Available Roles
@@ -44,26 +69,58 @@ This project uses a structured role-based development workflow. All AI assistant
 
 ## Workflow
 
-### Standard Development Flow:
-1. **User Request** → Tech Lead analyzes and plans
-2. **Tech Lead** → Breaks down tasks, gets approvals for packages
-3. **Engineer** (Backend/Frontend) → Implements using TDD
-4. **Reviewer** (Backend/Frontend) → Reviews, builds, tests, approves/rejects
+**⚠️ CRITICAL: ALWAYS START WITH TECH LEAD ROLE FOR NEW FEATURES/REQUESTS ⚠️**
+
+### Standard Development Flow (MANDATORY):
+
+**Step 1: Tech Lead Phase**
+- **STOP** when you receive a user request
+- **READ** `rules/tech-lead.md` first
+- **🚨 EXPLICITLY DECLARE YOUR ROLE**: Start your response with "**Acting as: Tech Lead** - [what you're doing]"
+- Analyze the requirement thoroughly
+- Clarify any ambiguities with the user
+- Present solution options if needed (exactly 3 options)
+- Get approvals for any new packages/dependencies
+- Break down tasks into clear, actionable items
+- Delegate to appropriate engineer
+
+**Step 2: Engineer Phase**
+- **READ** the appropriate engineer role file (`rules/backend-engineer.md` or `rules/frontend-engineer.md`)
+- **🚨 EXPLICITLY DECLARE YOUR ROLE**: Start your response with "**Acting as: [Frontend/Backend] Engineer** - [what you're doing]"
+- Follow TDD cycle: **Red** → **Green** → **Refactor**
+- Write failing tests first
+- Implement minimum code to pass tests
+- Refactor while keeping tests green
+- Escalate unclear requirements to Tech Lead
+- **NEVER** add packages without Tech Lead approval
+
+**Step 3: Reviewer Phase**
+- **READ** the appropriate reviewer role file (`rules/backend-reviewer.md` or `rules/frontend-reviewer.md`)
+- **🚨 EXPLICITLY DECLARE YOUR ROLE**: Start your response with "**Acting as: [Frontend/Backend] Reviewer** - [what you're doing]"
+- Review code quality and best practices
+- **MANDATORY**: Build the code (`mvn clean compile` or `npm run build`)
+- **MANDATORY**: Run all tests (`mvn test` or `npm test`)
+- **ABSOLUTE RULE**: Cannot approve if build fails or tests fail
+- Verify no unauthorized packages
+- Approve or reject with feedback
 
 ### When to Use Each Role:
 
-- **Starting a new feature/requirement**: Always start with **Tech Lead** role
-- **Implementing backend code**: Use **Backend Engineer** role
-- **Implementing frontend code**: Use **Frontend Engineer** role
-- **Reviewing backend code**: Use **Backend Reviewer** role
-- **Reviewing frontend code**: Use **Frontend Reviewer** role
+- **Starting a new feature/requirement**: **ALWAYS** start with **Tech Lead** role - NO EXCEPTIONS
+- **Implementing backend code**: Use **Backend Engineer** role (after Tech Lead phase)
+- **Implementing frontend code**: Use **Frontend Engineer** role (after Tech Lead phase)
+- **Reviewing backend code**: Use **Backend Reviewer** role (after Engineer phase)
+- **Reviewing frontend code**: Use **Frontend Reviewer** role (after Engineer phase)
+
+**NEVER skip phases. NEVER implement without Tech Lead analysis first.**
 
 ## Critical Rules
 
-1. **Package Management**: NO new packages can be added without Tech Lead approval
-2. **Build & Test**: Reviewers MUST build and test before approval - NO EXCEPTIONS
-3. **Escalation**: Engineers MUST escalate unclear requirements to Tech Lead
-4. **TDD**: All engineers MUST follow Test-Driven Development
+1. **Role Declaration**: **MUST explicitly declare your role** at the start of each response when switching roles (e.g., "**Acting as: Tech Lead** - ...")
+2. **Package Management**: NO new packages can be added without Tech Lead approval
+3. **Build & Test**: Reviewers MUST build and test before approval - NO EXCEPTIONS
+4. **Escalation**: Engineers MUST escalate unclear requirements to Tech Lead
+5. **TDD**: All engineers MUST follow Test-Driven Development
 
 ## How to Use
 
@@ -81,4 +138,29 @@ When working on this project:
 ---
 
 **IMPORTANT**: All AI assistants MUST read and follow the appropriate role file before starting work. The role files contain detailed rules and workflows that MUST be followed.
+
+---
+
+## Quick Reference Checklist
+
+When you receive a new feature request:
+
+1. ✅ **STOP** - Don't start coding immediately
+2. ✅ **READ** `rules/tech-lead.md` 
+3. ✅ **DECLARE ROLE** - Start with "**Acting as: Tech Lead** - ..."
+4. ✅ **ANALYZE** the requirement as Tech Lead
+5. ✅ **PLAN** the solution and break down tasks
+6. ✅ **GET APPROVALS** for any packages needed
+7. ✅ **SWITCH** to Engineer role and read appropriate role file
+8. ✅ **DECLARE ROLE** - Start with "**Acting as: [Frontend/Backend] Engineer** - ..."
+9. ✅ **WRITE TESTS FIRST** (TDD - Red phase)
+10. ✅ **IMPLEMENT** minimum code (TDD - Green phase)
+11. ✅ **REFACTOR** while keeping tests green (TDD - Refactor phase)
+12. ✅ **SWITCH** to Reviewer role and read appropriate role file
+13. ✅ **DECLARE ROLE** - Start with "**Acting as: [Frontend/Backend] Reviewer** - ..."
+14. ✅ **BUILD** the code
+15. ✅ **TEST** the code
+16. ✅ **REVIEW** and approve or reject
+
+**If you skip any step, you're doing it wrong.**
 
