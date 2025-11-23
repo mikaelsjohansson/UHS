@@ -9,39 +9,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Frontend**: React 18, TypeScript, Vite, Vitest + React Testing Library
 - **Purpose**: Track personal expenses by category with trends and analytics
 
-## Mandatory Development Workflow
-
-This project uses a **strict role-based development workflow**. Every single change—no matter how small—must follow this sequence:
-
-1. **Tech Lead Phase** (read `rules/tech-lead.md`)
-   - Analyze requirements and clarify ambiguities
-   - Plan solution with architectural considerations
-   - Present 3 options if design choices exist
-   - Approve any new package/dependency additions
-   - Delegate to appropriate engineer
-
-2. **Engineer Phase** (read `rules/backend-engineer.md` or `rules/frontend-engineer.md`)
-   - Follow TDD: Red → Green → Refactor
-   - Write failing tests first, then implement
-   - Escalate unclear requirements to Tech Lead
-   - Never add packages without Tech Lead approval
-
-3. **Reviewer Phase** (read `rules/backend-reviewer.md` or `rules/frontend-reviewer.md`)
-   - Build the code (`mvn -s settings.xml clean compile` for backend, `npm run build` for frontend)
-   - Run all tests (`mvn -s settings.xml test` or `npm test`)
-   - Cannot approve if build or tests fail
-   - Verify no unauthorized packages added
-   - Reject with specific feedback if issues found
-
-4. **Iterative Fixes** (if Reviewer rejects)
-   - Reviewer provides detailed feedback on what needs fixing
-   - Return to Engineer Phase to address feedback
-   - Engineer makes fixes and re-runs tests locally
-   - Return to Reviewer Phase for re-review
-   - Repeat until Reviewer approves
-
-**Critical rule**: There are NO exceptions for small changes. Every modification requires all three phases. If rejected, iterate until approved.
-
 ## Common Development Commands
 
 ### Backend (Java/Spring Boot)
