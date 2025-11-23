@@ -9,14 +9,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--color-border-secondary);
   border-radius: 4px;
-  background-color: #fafafa;
+  background-color: var(--color-bg-secondary);
   transition: box-shadow 0.2s;
 }
 
 .category-item:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .category-info {
@@ -26,7 +26,7 @@
 .category-name {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text-heading);
   margin: 0;
 }
 
@@ -46,30 +46,29 @@
 }
 
 .btn-edit {
-  background-color: #3498db;
+  background-color: var(--color-btn-edit);
   color: white;
 }
 
 .btn-edit:hover {
-  background-color: #2980b9;
+  background-color: var(--color-btn-edit-hover);
 }
 
 .btn-delete {
-  background-color: #e74c3c;
+  background-color: var(--color-btn-danger);
   color: white;
 }
 
 .btn-delete:hover {
-  background-color: #c0392b;
+  background-color: var(--color-btn-danger-hover);
 }
 
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
-  color: #999;
+  color: var(--color-text-light);
 }
 
 .empty-state p {
   font-size: 1.1rem;
 }
-

@@ -12,18 +12,20 @@
 
 .form-group label {
   font-weight: 500;
-  color: #555;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
 .form-group input,
 .form-group textarea {
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-primary);
   border-radius: 4px;
   font-size: 1rem;
   transition: border-color 0.2s;
   font-family: inherit;
+  background-color: var(--color-bg-input);
+  color: var(--color-text-primary);
 }
 
 .form-group textarea {
@@ -34,8 +36,8 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #2c3e50;
-  box-shadow: 0 0 0 2px rgba(44, 62, 80, 0.1);
+  border-color: var(--color-btn-primary);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .form-actions {
@@ -60,22 +62,21 @@
 }
 
 .btn-primary {
-  background-color: #2c3e50;
+  background-color: var(--color-btn-primary);
   color: white;
   flex: 1;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #34495e;
+  background-color: var(--color-btn-primary-hover);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: #95a5a6;
+  background-color: var(--color-btn-secondary);
   color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #7f8c8d;
+  background-color: var(--color-btn-secondary-hover);
 }
-

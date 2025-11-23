@@ -13,19 +13,19 @@
 
 .welcome-content h1 {
   font-size: 3rem;
-  color: #2c3e50;
+  color: var(--color-text-heading);
   margin-bottom: 1rem;
 }
 
 .welcome-subtitle {
   font-size: 1.5rem;
-  color: #7f8c8d;
+  color: var(--color-text-subtitle);
   margin-bottom: 2rem;
 }
 
 .welcome-description {
   font-size: 1.2rem;
-  color: #555;
+  color: var(--color-text-secondary);
   margin-bottom: 3rem;
   line-height: 1.6;
 }
@@ -38,10 +38,10 @@
 }
 
 .feature-card {
-  background: white;
+  background: var(--color-bg-card);
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -54,24 +54,23 @@
 
 .feature-card-link:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-hover);
 }
 
 .feature-icon {
   font-size: 3rem;
-  color: #3498db;
+  color: var(--color-accent-secondary);
   margin-bottom: 1rem;
   display: block;
 }
 
 .feature-card h3 {
-  color: #2c3e50;
+  color: var(--color-text-heading);
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
 
 .feature-card p {
-  color: #666;
+  color: var(--color-text-muted);
   line-height: 1.6;
 }
-

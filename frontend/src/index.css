@@ -1,3 +1,221 @@
+/* CSS Variables for Theme Support */
+:root[data-theme="light"] {
+  /* Background colors */
+  --color-bg-primary: #f5f5f5;
+  --color-bg-secondary: #fafafa;
+  --color-bg-card: white;
+  --color-bg-input: white;
+  --color-bg-hover: #f8f9fa;
+  --color-bg-selected: #e9ecef;
+  --color-bg-highlight: #f0f8ff;
+  --color-bg-summary: #f5f5f5;
+
+  /* Text colors */
+  --color-text-primary: #333;
+  --color-text-secondary: #555;
+  --color-text-muted: #666;
+  --color-text-light: #999;
+  --color-text-heading: #2c3e50;
+  --color-text-subtitle: #7f8c8d;
+
+  /* Border colors */
+  --color-border-primary: #ddd;
+  --color-border-secondary: #e0e0e0;
+  --color-border-light: #f0f0f0;
+  --color-border-table: #dee2e6;
+
+  /* Button colors */
+  --color-btn-primary: #2c3e50;
+  --color-btn-primary-hover: #34495e;
+  --color-btn-secondary: #95a5a6;
+  --color-btn-secondary-hover: #7f8c8d;
+  --color-btn-edit: #3498db;
+  --color-btn-edit-hover: #2980b9;
+  --color-btn-danger: #e74c3c;
+  --color-btn-danger-hover: #c0392b;
+
+  /* Accent colors */
+  --color-accent-primary: #0088FE;
+  --color-accent-secondary: #3498db;
+  --color-amount-negative: #e74c3c;
+
+  /* Error colors */
+  --color-error-bg: #fee;
+  --color-error-text: #c33;
+  --color-error-border: #fcc;
+  --color-error-accent: #d32f2f;
+  --color-error-light-bg: #ffebee;
+
+  /* Header colors */
+  --color-header-bg: #2c3e50;
+  --color-header-text: white;
+
+  /* Category tag */
+  --color-tag-bg: #ecf0f1;
+
+  /* Tooltip */
+  --color-tooltip-bg: rgba(255, 255, 255, 0.95);
+  --color-tooltip-border: #ccc;
+
+  /* Modal */
+  --color-modal-backdrop: rgba(0, 0, 0, 0.5);
+
+  /* Shadow */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  /* Focus ring */
+  --color-focus-ring: rgba(44, 62, 80, 0.1);
+  --color-focus-ring-accent: rgba(0, 136, 254, 0.2);
+}
+
+:root[data-theme="dark"] {
+  /* Background colors */
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #242424;
+  --color-bg-card: #2d2d2d;
+  --color-bg-input: #363636;
+  --color-bg-hover: #3a3a3a;
+  --color-bg-selected: #404040;
+  --color-bg-highlight: #2a3a4a;
+  --color-bg-summary: #242424;
+
+  /* Text colors */
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #b0b0b0;
+  --color-text-muted: #909090;
+  --color-text-light: #707070;
+  --color-text-heading: #e0e0e0;
+  --color-text-subtitle: #909090;
+
+  /* Border colors */
+  --color-border-primary: #444;
+  --color-border-secondary: #444;
+  --color-border-light: #3a3a3a;
+  --color-border-table: #444;
+
+  /* Button colors */
+  --color-btn-primary: #34495e;
+  --color-btn-primary-hover: #4a6278;
+  --color-btn-secondary: #5a6a7a;
+  --color-btn-secondary-hover: #6a7a8a;
+  --color-btn-edit: #5dade2;
+  --color-btn-edit-hover: #7dbde8;
+  --color-btn-danger: #e74c3c;
+  --color-btn-danger-hover: #c0392b;
+
+  /* Accent colors */
+  --color-accent-primary: #5dade2;
+  --color-accent-secondary: #5dade2;
+  --color-amount-negative: #e74c3c;
+
+  /* Error colors */
+  --color-error-bg: #3d2020;
+  --color-error-text: #ff8080;
+  --color-error-border: #5a3030;
+  --color-error-accent: #ff6b6b;
+  --color-error-light-bg: #3d2020;
+
+  /* Header colors */
+  --color-header-bg: #1e2d3d;
+  --color-header-text: #e0e0e0;
+
+  /* Category tag */
+  --color-tag-bg: #3a4a5a;
+
+  /* Tooltip */
+  --color-tooltip-bg: rgba(45, 45, 45, 0.95);
+  --color-tooltip-border: #555;
+
+  /* Modal */
+  --color-modal-backdrop: rgba(0, 0, 0, 0.7);
+
+  /* Shadow */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.4);
+
+  /* Focus ring */
+  --color-focus-ring: rgba(93, 173, 226, 0.2);
+  --color-focus-ring-accent: rgba(93, 173, 226, 0.3);
+}
+
+/* Default to light theme if no data-theme is set */
+:root:not([data-theme]) {
+  /* Background colors */
+  --color-bg-primary: #f5f5f5;
+  --color-bg-secondary: #fafafa;
+  --color-bg-card: white;
+  --color-bg-input: white;
+  --color-bg-hover: #f8f9fa;
+  --color-bg-selected: #e9ecef;
+  --color-bg-highlight: #f0f8ff;
+  --color-bg-summary: #f5f5f5;
+
+  /* Text colors */
+  --color-text-primary: #333;
+  --color-text-secondary: #555;
+  --color-text-muted: #666;
+  --color-text-light: #999;
+  --color-text-heading: #2c3e50;
+  --color-text-subtitle: #7f8c8d;
+
+  /* Border colors */
+  --color-border-primary: #ddd;
+  --color-border-secondary: #e0e0e0;
+  --color-border-light: #f0f0f0;
+  --color-border-table: #dee2e6;
+
+  /* Button colors */
+  --color-btn-primary: #2c3e50;
+  --color-btn-primary-hover: #34495e;
+  --color-btn-secondary: #95a5a6;
+  --color-btn-secondary-hover: #7f8c8d;
+  --color-btn-edit: #3498db;
+  --color-btn-edit-hover: #2980b9;
+  --color-btn-danger: #e74c3c;
+  --color-btn-danger-hover: #c0392b;
+
+  /* Accent colors */
+  --color-accent-primary: #0088FE;
+  --color-accent-secondary: #3498db;
+  --color-amount-negative: #e74c3c;
+
+  /* Error colors */
+  --color-error-bg: #fee;
+  --color-error-text: #c33;
+  --color-error-border: #fcc;
+  --color-error-accent: #d32f2f;
+  --color-error-light-bg: #ffebee;
+
+  /* Header colors */
+  --color-header-bg: #2c3e50;
+  --color-header-text: white;
+
+  /* Category tag */
+  --color-tag-bg: #ecf0f1;
+
+  /* Tooltip */
+  --color-tooltip-bg: rgba(255, 255, 255, 0.95);
+  --color-tooltip-border: #ccc;
+
+  /* Modal */
+  --color-modal-backdrop: rgba(0, 0, 0, 0.5);
+
+  /* Shadow */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  /* Focus ring */
+  --color-focus-ring: rgba(44, 62, 80, 0.1);
+  --color-focus-ring-accent: rgba(0, 136, 254, 0.2);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -10,12 +228,12 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-

@@ -1,9 +1,9 @@
 .trend-chart-container {
   width: 100%;
   padding: 20px;
-  background: white;
+  background: var(--color-bg-card);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .trend-header {
@@ -12,12 +12,12 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid var(--color-border-secondary);
 }
 
 .trend-header h4 {
   margin: 0;
-  color: #333;
+  color: var(--color-text-primary);
   font-size: 1.2rem;
 }
 
@@ -25,26 +25,26 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: bold;
-  color: #0088FE;
+  color: var(--color-accent-primary);
 }
 
 .trend-tooltip {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #ccc;
+  background: var(--color-tooltip-bg);
+  border: 1px solid var(--color-tooltip-border);
   border-radius: 4px;
   padding: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .tooltip-date {
   font-weight: bold;
   margin: 0 0 5px 0;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .tooltip-amount {
   font-size: 1.1rem;
-  color: #0088FE;
+  color: var(--color-accent-primary);
   margin: 0;
   font-weight: bold;
 }
@@ -54,10 +54,9 @@
 .no-data {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .error-message {
-  color: #d32f2f;
+  color: var(--color-error-accent);
 }
-

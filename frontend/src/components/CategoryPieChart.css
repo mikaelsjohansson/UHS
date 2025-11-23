@@ -1,9 +1,9 @@
 .pie-chart-container {
   width: 100%;
   padding: 20px;
-  background: white;
+  background: var(--color-bg-card);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .chart-summary {
@@ -14,40 +14,39 @@
 .total-amount {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .pie-tooltip {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #ccc;
+  background: var(--color-tooltip-bg);
+  border: 1px solid var(--color-tooltip-border);
   border-radius: 4px;
   padding: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .tooltip-label {
   font-weight: bold;
   margin: 0 0 5px 0;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .tooltip-value {
   font-size: 1.1rem;
-  color: #0088FE;
+  color: var(--color-accent-primary);
   margin: 5px 0;
   font-weight: bold;
 }
 
 .tooltip-count {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text-muted);
   margin: 5px 0;
 }
 
 .tooltip-percentage {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--color-text-light);
   margin: 5px 0 0 0;
 }
-

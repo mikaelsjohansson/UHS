@@ -5,10 +5,10 @@
 }
 
 .app-header {
-  background-color: #2c3e50;
-  color: white;
+  background-color: var(--color-header-bg);
+  color: var(--color-header-text);
   padding: 1.5rem 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .app-header h1 {
@@ -25,18 +25,18 @@
 }
 
 .error-message {
-  background-color: #fee;
-  color: #c33;
+  background-color: var(--color-error-bg);
+  color: var(--color-error-text);
   padding: 1rem;
   border-radius: 4px;
   margin-bottom: 1.5rem;
-  border: 1px solid #fcc;
+  border: 1px solid var(--color-error-border);
 }
 
 .loading {
   text-align: center;
   padding: 2rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .content-container {
@@ -53,16 +53,15 @@
 
 .form-section,
 .list-section {
-  background: white;
+  background: var(--color-bg-card);
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .form-section h2,
 .list-section h2 {
   margin-bottom: 1.5rem;
-  color: #2c3e50;
+  color: var(--color-text-heading);
   font-size: 1.5rem;
 }
-

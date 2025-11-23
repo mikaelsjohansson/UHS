@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { initializeCurrency } from './utils/currency'
+import { ThemeProvider } from './context/ThemeContext'
 
 // Initialize currency configuration before rendering app
 initializeCurrency()
@@ -10,7 +11,9 @@ initializeCurrency()
     console.log('Currency initialized successfully');
     ReactDOM.createRoot(document.getElementById('root')!).render(
       <React.StrictMode>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </React.StrictMode>,
     )
   })
@@ -19,7 +22,9 @@ initializeCurrency()
     // Still render app with default currency (USD)
     ReactDOM.createRoot(document.getElementById('root')!).render(
       <React.StrictMode>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </React.StrictMode>,
     )
   })
