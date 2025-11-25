@@ -3,15 +3,38 @@ import { Expense } from '../types/expense';
 import { CategoryExpenseSummary, CategoryTrend, MultiCategoryTrend } from '../types/analytics';
 
 const API_BASE_URL = '/api/expenses';
+const AUTH_TOKEN_KEY = 'auth_token';
 
 // Create axios instance - can be mocked in tests
 export const createApiInstance = (): AxiosInstance => {
-  return axios.create({
+  const instance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
       'Content-Type': 'application/json',
     },
   });
+
+  // Add JWT token to requests
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  // Handle 401 errors by clearing token
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  return instance;
 };
 
 const api = createApiInstance();

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:5173")
 public class ConfigController {
 
-    @Value("${app.currency:USD}")
+    @Value("${app.currency:SEK}")
     private String currency;
 
     @GetMapping

@@ -4,6 +4,25 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import Layout from '../Layout';
 import { ThemeProvider } from '../../context/ThemeContext';
+import { AuthProvider } from '../../context/AuthContext';
+
+// Create mocks using vi.hoisted to ensure they're available before module import
+const mockAuthService = vi.hoisted(() => ({
+  login: vi.fn(),
+  logout: vi.fn(),
+  getMe: vi.fn(),
+  isSetupRequired: vi.fn(),
+  setupAdmin: vi.fn(),
+  setPassword: vi.fn(),
+  validateToken: vi.fn(),
+  getToken: vi.fn(),
+  isAuthenticated: vi.fn(),
+}));
+
+vi.mock('../../services/authService', () => ({
+  authService: mockAuthService,
+  AUTH_TOKEN_KEY: 'auth_token',
+}));
 
 // Create a mock localStorage
 function createMockLocalStorage() {
@@ -32,6 +51,8 @@ describe('Layout', () => {
   let mockLocalStorage: ReturnType<typeof createMockLocalStorage>;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     // Create and setup mock localStorage
     mockLocalStorage = createMockLocalStorage();
     Object.defineProperty(window, 'localStorage', {
@@ -67,33 +88,56 @@ describe('Layout', () => {
     document.documentElement.removeAttribute('data-theme');
   });
 
+  const mockAdminUser = {
+    id: 1,
+    username: 'admin',
+    email: 'admin@example.com',
+    role: 'ADMIN' as const,
+    isActive: true,
+    passwordSet: true,
+    isDefaultAdmin: true,
+    createdAt: '2024-01-01T00:00:00Z',
+  };
+
+  const mockRegularUser = {
+    id: 2,
+    username: 'regularuser',
+    email: 'user@example.com',
+    role: 'USER' as const,
+    isActive: true,
+    passwordSet: true,
+    isDefaultAdmin: false,
+    createdAt: '2024-01-01T00:00:00Z',
+  };
+
   const renderLayout = () => {
     return render(
       <BrowserRouter>
         <ThemeProvider>
-          <Layout />
+          <AuthProvider>
+            <Layout />
+          </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>
     );
   };
 
-  it('renders app title as a link to home', () => {
-    renderLayout();
-    const titleLink = screen.getByRole('link', { name: /UHS - Personal Expense Tracker/i });
-    expect(titleLink).toBeInTheDocument();
-    expect(titleLink).toHaveAttribute('href', '/');
-  });
+  describe('Structure', () => {
+    it('renders navigation component', () => {
+      renderLayout();
+      const nav = screen.getByRole('navigation');
+      expect(nav).toBeInTheDocument();
+    });
 
-  it('does not render Home navigation link', () => {
-    renderLayout();
-    const homeLink = screen.queryByRole('link', { name: /^Home$/i });
-    expect(homeLink).not.toBeInTheDocument();
-  });
+    it('renders footer with copyright', () => {
+      renderLayout();
+      expect(screen.getByText(/2025 UHS - Personal Expense Tracker/i)).toBeInTheDocument();
+    });
 
-  it('does not render header navigation section', () => {
-    renderLayout();
-    const nav = screen.queryByRole('navigation');
-    expect(nav).not.toBeInTheDocument();
+    it('renders UHS brand in navigation', () => {
+      renderLayout();
+      expect(screen.getByText('UHS')).toBeInTheDocument();
+    });
   });
 
   describe('Dark Mode Toggle', () => {
@@ -155,6 +199,67 @@ describe('Layout', () => {
       renderLayout();
       const toggleButton = screen.getByRole('button', { name: /toggle theme/i });
       expect(toggleButton).toHaveAttribute('aria-label');
+    });
+  });
+
+  describe('User Info Display (via Navigation)', () => {
+    it('displays username when user is authenticated', async () => {
+      mockAuthService.getToken.mockReturnValue('valid-token');
+      mockAuthService.isAuthenticated.mockReturnValue(true);
+      mockAuthService.getMe.mockResolvedValue(mockAdminUser);
+
+      renderLayout();
+
+      await waitFor(() => {
+        expect(screen.getByText('admin')).toBeInTheDocument();
+      });
+    });
+
+    it('displays user role when user is authenticated', async () => {
+      mockAuthService.getToken.mockReturnValue('valid-token');
+      mockAuthService.isAuthenticated.mockReturnValue(true);
+      mockAuthService.getMe.mockResolvedValue(mockAdminUser);
+
+      renderLayout();
+
+      await waitFor(() => {
+        expect(screen.getByText('ADMIN')).toBeInTheDocument();
+      });
+    });
+
+  });
+
+  describe('Logout Button (via Navigation)', () => {
+    it('renders logout button when user is authenticated', async () => {
+      mockAuthService.getToken.mockReturnValue('valid-token');
+      mockAuthService.isAuthenticated.mockReturnValue(true);
+      mockAuthService.getMe.mockResolvedValue(mockRegularUser);
+
+      renderLayout();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
+      });
+    });
+
+    it('calls logout when logout button is clicked', async () => {
+      const user = userEvent.setup();
+      mockAuthService.getToken.mockReturnValue('valid-token');
+      mockAuthService.isAuthenticated.mockReturnValue(true);
+      mockAuthService.getMe.mockResolvedValue(mockRegularUser);
+      mockAuthService.logout.mockResolvedValue(undefined);
+
+      renderLayout();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /logout/i }));
+
+      await waitFor(() => {
+        expect(mockAuthService.logout).toHaveBeenCalled();
+      });
     });
   });
 });

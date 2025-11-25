@@ -1,6 +1,6 @@
 import { configService } from '../services/configService';
 
-let currency: string = 'USD'; // Default currency
+let currency: string = 'SEK'; // Default currency
 let currencyInitialized: boolean = false;
 
 /**
@@ -13,12 +13,12 @@ export const initializeCurrency = async (): Promise<void> => {
   
   try {
     const config = await configService.getConfig();
-    currency = config.currency || 'USD';
+    currency = config.currency || 'SEK';
     currencyInitialized = true;
     console.log(`Currency initialized to: ${currency}`);
   } catch (error) {
-    console.warn('Failed to load currency configuration, using default USD', error);
-    currency = 'USD';
+    console.warn('Failed to load currency configuration, using default SEK', error);
+    currency = 'SEK';
     currencyInitialized = true;
   }
 };
@@ -57,7 +57,7 @@ export const setCurrency = (newCurrency: string): void => {
  * @internal
  */
 export const resetCurrency = (): void => {
-  currency = 'USD';
+  currency = 'SEK';
   currencyInitialized = false;
 };
 

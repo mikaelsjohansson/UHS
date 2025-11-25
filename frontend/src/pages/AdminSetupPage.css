@@ -1,0 +1,72 @@
+.admin-setup-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-secondary, #f3f4f6);
+  padding: 1rem;
+}
+
+.admin-setup-container {
+  background-color: var(--color-bg-card);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+  padding: 2rem;
+  width: 100%;
+  max-width: 450px;
+}
+
+.admin-setup-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-setup-header h1 {
+  color: var(--color-text-heading);
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.admin-setup-info {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+  background-color: var(--color-bg-hover, #f0f9ff);
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--color-btn-primary, #3b82f6);
+}
+
+.admin-setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.setup-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .admin-setup-container {
+    padding: 1.5rem;
+  }
+
+  .admin-setup-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .admin-setup-info {
+    font-size: 0.85rem;
+  }
+}

@@ -1,6 +1,7 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { FaMoon, FaSun } from 'react-icons/fa';
 import { useTheme } from '../context/ThemeContext';
+import Navigation from './Navigation';
 import './Layout.css';
 
 function Layout() {
@@ -9,9 +10,7 @@ function Layout() {
   return (
     <div className="layout">
       <header className="app-header">
-        <Link to="/" className="app-title">
-          <h1>UHS - Personal Expense Tracker</h1>
-        </Link>
+        <Navigation />
         <button
           className="theme-toggle-btn"
           onClick={toggleTheme}
@@ -24,9 +23,14 @@ function Layout() {
           )}
         </button>
       </header>
+
       <main className="layout-main">
         <Outlet />
       </main>
+
+      <footer className="app-footer">
+        <p>&copy; 2025 UHS - Personal Expense Tracker</p>
+      </footer>
     </div>
   );
 }

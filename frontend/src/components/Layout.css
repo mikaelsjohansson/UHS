@@ -56,6 +56,79 @@
   background-color: var(--color-bg-primary);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.user-icon {
+  font-size: 0.9rem;
+}
+
+.username {
+  font-weight: 500;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.user-management-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--color-header-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.user-management-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 6px;
+  color: var(--color-header-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 100, 100, 0.3);
+}
+
 .theme-toggle-btn {
   background: transparent;
   border: none;
@@ -74,19 +147,37 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Footer styles */
+.app-footer {
+  background-color: var(--color-header-bg);
+  color: var(--color-header-text);
+  padding: 1rem 2rem;
+  text-align: center;
+  margin-top: auto;
+}
+
+.app-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
 @media (max-width: 768px) {
   .app-header {
-    flex-direction: column;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     padding: 1rem;
   }
 
-  .app-title h1 {
-    font-size: 1.5rem;
+  .theme-toggle-btn {
+    order: 1;
   }
 
-  .header-nav {
-    width: 100%;
-    justify-content: center;
+  .app-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .app-footer p {
+    font-size: 0.8rem;
   }
 }

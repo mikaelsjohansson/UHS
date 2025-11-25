@@ -47,3 +47,4 @@ const CategoryList = ({ categories, onEdit, onDelete }: CategoryListProps) => {
 
 export default CategoryList;
 
+

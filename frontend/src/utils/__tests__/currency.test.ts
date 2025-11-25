@@ -28,14 +28,14 @@ describe('currency utils', () => {
       expect(formatted).toContain('kr');
     });
 
-    it('should default to USD if config fetch fails', async () => {
+    it('should default to SEK if config fetch fails', async () => {
       vi.mocked(configService.getConfig).mockRejectedValue(new Error('Network error'));
 
       await initializeCurrency();
 
-      // Should not throw, and currency should default to USD
+      // Should not throw, and currency should default to SEK
       const formatted = formatCurrency(100);
-      expect(formatted).toContain('$');
+      expect(formatted).toContain('kr');
     });
   });
 
@@ -52,13 +52,36 @@ describe('currency utils', () => {
       expect(formatted).toContain('234');
     });
 
-    it('should format currency with USD as default', () => {
+    it('should format currency with SEK as default', () => {
+      // Without initialization, should use SEK as default
+      const formatted = formatCurrency(1234.56);
+
+      expect(formatted).toContain('kr');
+      expect(formatted).toContain('1');
+      expect(formatted).toContain('234');
+    });
+
+    it('should format currency with USD when explicitly set', () => {
       // Ensure USD is set
       setCurrency('USD');
       const formatted = formatCurrency(1234.56);
 
       expect(formatted).toContain('$');
       expect(formatted).toContain('1,234.56');
+    });
+  });
+
+  describe('resetCurrency', () => {
+    it('should reset currency to SEK default', () => {
+      // Set to a different currency
+      setCurrency('USD');
+      let formatted = formatCurrency(100);
+      expect(formatted).toContain('$');
+
+      // Reset should bring it back to SEK
+      resetCurrency();
+      formatted = formatCurrency(100);
+      expect(formatted).toContain('kr');
     });
   });
 });

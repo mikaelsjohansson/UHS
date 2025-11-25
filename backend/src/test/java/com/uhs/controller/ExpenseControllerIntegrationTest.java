@@ -2,7 +2,12 @@ package com.uhs.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uhs.dto.ExpenseDto;
+import com.uhs.model.User;
+import com.uhs.model.UserRole;
+import com.uhs.repository.UserRepository;
 import com.uhs.service.ExpenseService;
+import com.uhs.service.JwtService;
+import com.uhs.service.PasswordEncodingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import jakarta.persistence.EntityManager;
@@ -44,6 +49,17 @@ class ExpenseControllerIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private PasswordEncodingService passwordEncodingService;
+
+    private String authToken;
+
     @BeforeEach
     @Transactional
     void setUp() {
@@ -54,6 +70,21 @@ class ExpenseControllerIntegrationTest {
                 expenseService.deleteExpense(expense.getId());
             }
         }
+
+        // Create or get test user for authentication
+        User testUser = userRepository.findByUsername("integrationtestuser")
+                .orElseGet(() -> {
+                    User user = new User();
+                    user.setUsername("integrationtestuser");
+                    user.setRole(UserRole.USER);
+                    user.setIsActive(true);
+                    user.setPasswordSet(true);
+                    user.setIsDefaultAdmin(false);
+                    user.setPasswordHash(passwordEncodingService.encodePassword("TestPass123!"));
+                    return userRepository.save(user);
+                });
+
+        authToken = jwtService.generateToken(testUser);
     }
 
     @Test
@@ -82,6 +113,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Search for "skåne"
         mockMvc.perform(get("/api/expenses/suggestions")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("query", "skåne"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -102,6 +134,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Search for something that doesn't match
         mockMvc.perform(get("/api/expenses/suggestions")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("query", "xyz123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -120,6 +153,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Search with different case (lowercase)
         mockMvc.perform(get("/api/expenses/suggestions")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("query", "skåne"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -161,6 +195,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get category hint
         mockMvc.perform(get("/api/expenses/category-hint")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("description", "Skånetrafiken"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Transport"));
@@ -178,23 +213,25 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get category hint for non-existent description
         mockMvc.perform(get("/api/expenses/category-hint")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("description", "NonExistent"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
-    void getCategoryHint_WithExpensesWithoutCategory_ShouldReturnNoContent() throws Exception {
-        // Given - Create expense without category
+    void getCategoryHint_WithNonExistentDescription_ShouldReturnNoContent() throws Exception {
+        // Given - Create an expense with a different description
         ExpenseDto expense1 = new ExpenseDto();
-        expense1.setDescription("Skånetrafiken");
+        expense1.setDescription("ICA Supermarket");
         expense1.setAmount(new BigDecimal("50.00"));
         expense1.setExpenseDate(LocalDateTime.now());
-        expense1.setCategory(null);
+        expense1.setCategory("Food");
         expenseService.createExpense(expense1);
 
-        // When & Then - Get category hint (should return no content since no category exists)
+        // When & Then - Get category hint for a description that doesn't exist
         mockMvc.perform(get("/api/expenses/category-hint")
-                        .param("description", "Skånetrafiken"))
+                        .header("Authorization", "Bearer " + authToken)
+                        .param("description", "NonExistentDescription"))
                 .andExpect(status().isNoContent());
     }
 
@@ -210,6 +247,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get category hint with different case (lowercase)
         mockMvc.perform(get("/api/expenses/category-hint")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("description", "skånetrafiken"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Transport"));
@@ -234,6 +272,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Search with partial match
         mockMvc.perform(get("/api/expenses/suggestions")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("query", "trafik"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -274,6 +313,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get expenses for January 2024
         mockMvc.perform(get("/api/expenses/month")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("year", "2024")
                         .param("month", "1"))
                 .andExpect(status().isOk())
@@ -306,6 +346,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get expenses for February 2024 (no expenses)
         mockMvc.perform(get("/api/expenses/month")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("year", "2024")
                         .param("month", "2"))
                 .andExpect(status().isOk())
@@ -339,6 +380,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get expenses for January 2024
         mockMvc.perform(get("/api/expenses/month")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("year", "2024")
                         .param("month", "1"))
                 .andExpect(status().isOk())
@@ -368,6 +410,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get expenses for February 2024
         mockMvc.perform(get("/api/expenses/month")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("year", "2024")
                         .param("month", "2"))
                 .andExpect(status().isOk())
@@ -417,6 +460,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get multi-category trend for Food and Transport
         mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("categories", "Food", "Transport")
                         .param("startDate", "2024-01-01T00:00:00")
                         .param("endDate", "2024-01-31T23:59:59"))
@@ -459,6 +503,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get multi-category trend for all categories (no categories parameter)
         mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("startDate", "2024-01-01T00:00:00")
                         .param("endDate", "2024-01-31T23:59:59"))
                 .andExpect(status().isOk())
@@ -488,6 +533,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get multi-category trend for January 2024 (no matching expenses)
         mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("categories", "Food", "Transport")
                         .param("startDate", "2024-01-01T00:00:00")
                         .param("endDate", "2024-01-31T23:59:59"))
@@ -522,6 +568,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get multi-category trend for Food only
         mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("categories", "Food")
                         .param("startDate", "2024-01-01T00:00:00")
                         .param("endDate", "2024-01-31T23:59:59"))
@@ -567,6 +614,7 @@ class ExpenseControllerIntegrationTest {
 
         // When & Then - Get multi-category trend for January 2024
         mockMvc.perform(get("/api/expenses/analytics/categories/trend")
+                        .header("Authorization", "Bearer " + authToken)
                         .param("categories", "Food", "Transport")
                         .param("startDate", "2024-01-01T00:00:00")
                         .param("endDate", "2024-01-31T23:59:59"))

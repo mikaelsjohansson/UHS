@@ -7,7 +7,7 @@ const { mockGet, mockPost, mockPut, mockDelete, mockApiInstance } = vi.hoisted((
   const post = vi.fn();
   const put = vi.fn();
   const del = vi.fn();
-  
+
   return {
     mockGet: get,
     mockPost: post,
@@ -18,6 +18,14 @@ const { mockGet, mockPost, mockPut, mockDelete, mockApiInstance } = vi.hoisted((
       post,
       put,
       delete: del,
+      interceptors: {
+        request: {
+          use: vi.fn(),
+        },
+        response: {
+          use: vi.fn(),
+        },
+      },
     },
   };
 });
