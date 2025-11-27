@@ -204,6 +204,43 @@ Key rules for this project:
 
 See `.cursorrules` for complete workflow details.
 
+## Sub-Agent Delegation Rule
+
+**CRITICAL**: Claude Code MUST ALWAYS use the appropriate sub-agent for any task. Never do work directly that a sub-agent is designed to handle:
+
+- **tech-lead-orchestrator**: Planning any feature, bug fix, or architectural change
+- **backend-engineer**: Java/Spring Boot implementation with TDD
+- **frontend-engineer-tdd**: React/TypeScript implementation with TDD
+- **backend-reviewer**: Reviewing completed backend work
+- **frontend-reviewer**: Reviewing completed frontend work
+- **Explore**: Codebase exploration and analysis
+- **general-purpose**: Complex research and multi-step tasks
+
+This ensures proper workflow adherence, TDD compliance, and quality control. NO EXCEPTIONS.
+
+### Parallel Execution Rule
+
+**CRITICAL**: When delegating to multiple independent sub-agents, ALWAYS run them in parallel in a single message. For example:
+- When both backend and frontend changes are required, launch backend-engineer AND frontend-engineer-tdd in the same message
+- When multiple features can be worked on independently, launch multiple agents simultaneously
+- Do NOT wait for one agent to complete before starting another if they are independent
+
+This maximizes efficiency and reduces total completion time. Only run agents sequentially if one depends on the output of another.
+
+## Implementation Plan Workflow
+
+**IMPORTANT**: When requesting feature implementation or changes:
+1. **Tech Lead analyzes requirements** and presents a detailed implementation plan with:
+   - Architecture/design approach
+   - Specific files to modify with detailed changes
+   - Database/schema considerations
+   - Tests to create/update
+   - Multiple implementation options (if applicable) with pros/cons
+2. **User reviews and approves the plan** before any code is written. This is **not allowed* to be skipped
+3. **Only after approval**, engineers begin implementation following the three-phase workflow
+
+**This ensures**: Full visibility of approach, opportunity to request changes before work begins, and alignment on design decisions.
+
 ## Important Configuration
 
 - **Currency**: Configured as `SEK` in `application.properties`
